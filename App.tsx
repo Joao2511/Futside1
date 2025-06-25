@@ -4,19 +4,21 @@
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-// 1. Importar o SafeAreaProvider
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+// 1. Importe o componente Toast
+import Toast from 'react-native-toast-message';
 
 import { AuthProvider } from './src/contexts/AuthContext';
 import { Routes } from './src/routes';
 
 function App(): React.JSX.Element {
   return (
-    // 2. Envolver tudo com o SafeAreaProvider
     <SafeAreaProvider>
       <NavigationContainer>
         <AuthProvider>
           <Routes />
+          {/* 2. Adicione o componente Toast aqui. Ele ficará "invisível" até ser chamado. */}
+          <Toast />
         </AuthProvider>
       </NavigationContainer>
     </SafeAreaProvider>

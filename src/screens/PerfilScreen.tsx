@@ -1,5 +1,5 @@
 // src/screens/PerfilScreen.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -15,19 +15,21 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 import { useAuth } from '../hooks/useAuth';
+import { AddFriendModal } from '../components/AddFriendModal';
 
-// Componente para um item de estatística
-const StatItem = ({ value, label }: { value: string | number, label: string }) => (
-    <View style={styles.statItem}>
+// O StatItem agora pode ser clicável
+const StatItem = ({ value, label, onPress }: { value: string | number, label: string, onPress?: () => void }) => (
+    <TouchableOpacity onPress={onPress} disabled={!onPress} style={styles.statItem}>
         <Text style={styles.statValue}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </TouchableOpacity>
 );
 
 export function PerfilScreen() {
     const { user } = useAuth();
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+    const [isAddFriendModalVisible, setAddFriendModalVisible] = useState(false);
 
     return (
         <View style={styles.container}>
@@ -36,10 +38,10 @@ export function PerfilScreen() {
                 backgroundColor="transparent"
                 barStyle="dark-content"
             />
-            {/* 1. View amarela que servirá como fundo para a StatusBar */}
             <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
 
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Banner */}
                 <ImageBackground
                     source={{ uri: 'https://i.imgur.com/u8y4ThC.jpeg' }}
                     style={styles.banner}
@@ -47,19 +49,18 @@ export function PerfilScreen() {
                     <View style={styles.bannerOverlay} />
                 </ImageBackground>
 
+                {/* Área de Conteúdo Principal */}
                 <View style={styles.contentArea}>
-                    {/* 2. O botão de configurações agora está DENTRO da área de conteúdo */}
                     <View style={styles.headerRow}>
-                        {/* Espaço em branco para alinhar o botão à direita */}
-                        <View style={{ flex: 1 }} /> 
-                        <TouchableOpacity 
+                        <View style={{ flex: 1 }} />
+                        <TouchableOpacity
                             style={styles.settingsButton}
                             onPress={() => navigation.navigate('Settings')}
                         >
                             <Icon name="settings" size={24} color={theme.colors.placeholder} />
                         </TouchableOpacity>
                     </View>
-                    
+
                     <View style={styles.avatarContainer}>
                         <Image
                             source={{ uri: 'https://i.imgur.com/4z1kL3A.png' }}
@@ -75,19 +76,34 @@ export function PerfilScreen() {
                     </View>
                 </View>
 
+                {/* Estatísticas */}
                 <View style={styles.statsContainer}>
                     <StatItem value={48} label="PARTIDAS" />
                     <View style={styles.statsSeparator} />
-                    <StatItem value={12} label="AMIGOS" />
+                    <StatItem
+                        value={12}
+                        label="AMIGOS"
+                        onPress={() => navigation.navigate('Friends')}
+                    />
                 </View>
 
+                {/* Botões */}
                 <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => setAddFriendModalVisible(true)}
+                    >
                         <Icon name="user-plus" size={20} color={theme.colors.white} />
                         <Text style={styles.actionButtonText}>ADICIONAR AMIGO</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Modal de Adicionar Amigo */}
+            <AddFriendModal
+                visible={isAddFriendModalVisible}
+                onClose={() => setAddFriendModalVisible(false)}
+            />
         </View>
     );
 }
@@ -110,7 +126,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         marginTop: -30,
-        paddingTop: 80, // Mantém o espaço para o avatar
+        paddingTop: 80,
         alignItems: 'center',
     },
     headerRow: {
@@ -122,11 +138,10 @@ const styles = StyleSheet.create({
         paddingTop: theme.spacing.medium,
     },
     settingsButton: {
-        padding: 5, // Aumenta a área de toque
+        padding: 5,
     },
     avatarContainer: {
-        // O avatar não é mais absoluto na tela inteira, mas sim relativo ao contentArea
-        marginTop: -155, // -(altura do avatar / 2) - paddingTop do contentArea
+        marginTop: -155,
         alignSelf: 'center',
     },
     avatar: {
@@ -167,6 +182,7 @@ const styles = StyleSheet.create({
     },
     statItem: {
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
     statValue: {
         fontSize: 22,
