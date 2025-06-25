@@ -12,8 +12,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
+import { useNavigation } from '@react-navigation/native';
 
-// 1. Dados com as NOVAS URLs de imagens que você forneceu
 const mockCourts = [
     {
         id: '1',
@@ -35,45 +35,40 @@ const mockCourts = [
     }
 ];
 
-// Componente LocationCard refatorado com a ordem de camadas correta
-const LocationCard = ({ court }: { court: typeof mockCourts[0] }) => (
-    <TouchableOpacity>
-        <View style={styles.cardContainer}>
-            {/* Camada 0: Imagem do campo */}
-            <Image
-                source={{ uri: court.image }}
-                style={styles.backgroundImage}
-                resizeMode="cover"
-            />
-            
-            {/* Camada 1: Overlay escuro para dar contraste */}
-            <View style={styles.darkOverlay} />
-            
-            {/* Camada 2: Marca d'água do leão (card.png) */}
-            <Image
-                // 2. Corrigindo o caminho do require
-                source={require('../assets/card.png')} 
-                style={styles.cardWatermark}
-                resizeMode="cover"
-            />
-            
-            {/* Camada 3: Conteúdo textual, por cima de tudo */}
-            <View style={styles.cardContent}>
-                <View style={styles.tag}>
-                    <Icon name="dribbble" size={14} color={theme.colors.text} />
-                    <Text style={styles.tagText}>Campo Society</Text>
+const LocationCard = ({ court }: { court: typeof mockCourts[0] }) => {
+    const navigation = useNavigation();
+    return (
+        // O TouchableOpacity agora envolve o card inteiro e tem a ação de navegar
+        <TouchableOpacity onPress={() => navigation.navigate('LocationDetail')}>
+            <View style={styles.cardContainer}>
+                <Image
+                    source={{ uri: court.image }}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+                />
+                <View style={styles.darkOverlay} />
+                <Image
+                    source={require('../assets/card.png')}
+                    style={styles.cardWatermark}
+                    resizeMode="cover"
+                />
+                <View style={styles.cardContent}>
+                    <View style={styles.tag}>
+                        <Icon name="dribbble" size={14} color={theme.colors.text} />
+                        <Text style={styles.tagText}>Campo Society</Text>
+                    </View>
+                    <View>
+                        <Text style={styles.courtName}>{court.name}</Text>
+                        <Text style={styles.courtAddress}>{court.address}</Text>
+                    </View>
+                    <View style={styles.cardButton}>
+                        <Text style={styles.cardButtonText}>VER MAIS</Text>
+                    </View>
                 </View>
-                <View>
-                    <Text style={styles.courtName}>{court.name}</Text>
-                    <Text style={styles.courtAddress}>{court.address}</Text>
-                </View>
-                <TouchableOpacity style={styles.cardButton}>
-                    <Text style={styles.cardButtonText}>VER MAIS</Text>
-                </TouchableOpacity>
             </View>
-        </View>
-    </TouchableOpacity>
-);
+        </TouchableOpacity>
+    )
+};
 
 export function LocacaoScreen() {
     const insets = useSafeAreaInsets();
@@ -128,7 +123,7 @@ const styles = StyleSheet.create({
     },
     backgroundImage: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 0, 
+        zIndex: 0,
     },
     darkOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -137,7 +132,7 @@ const styles = StyleSheet.create({
     },
     cardWatermark: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 2, // Fica sobre o overlay escuro
+        zIndex: 2,
     },
     cardContent: {
         ...StyleSheet.absoluteFillObject,
@@ -165,7 +160,7 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: 'bold',
         textShadowColor: 'rgba(0, 0, 0, 0.75)',
-        textShadowOffset: {width: -1, height: 1},
+        textShadowOffset: { width: -1, height: 1 },
         textShadowRadius: 10
     },
     courtAddress: {
@@ -174,7 +169,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: 4,
         textShadowColor: 'rgba(0, 0, 0, 0.75)',
-        textShadowOffset: {width: -1, height: 1},
+        textShadowOffset: { width: -1, height: 1 },
         textShadowRadius: 10
     },
     cardButton: {

@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabRoutes } from './tab.routes';
 // 2. Importar a nossa tela modal
 import { CourtDetailScreen } from '../screens/CourtDetailScreen';
+import { LocationDetailScreen } from '../screens/LocationDetailScreen'; // 1. Importar a nova tela
 
 const { Navigator, Screen } = createNativeStackNavigator();
 
@@ -24,6 +25,10 @@ export function AppRoutes() {
             name="CourtDetail"
             component={CourtDetailScreen}
             options={{ presentation: 'modal' }}
+        />
+        <Screen
+            name="LocationDetail"
+            component={LocationDetailScreen}
         />
     </Navigator>
   );
