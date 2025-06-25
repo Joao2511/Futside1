@@ -1,5 +1,5 @@
 // src/screens/HomeScreen.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,37 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
-  ImageBackground, // 1. Importar o ImageBackground
+  ImageBackground,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigation } from '@react-navigation/native';
 
 export function HomeScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  const [scoreA, setScoreA] = useState(1);
+  const [scoreB, setScoreB] = useState(2);
+  const [matchMinute, setMatchMinute] = useState(42);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMatchMinute(prevMinute => (prevMinute >= 90 ? 90 : prevMinute + 1));
+      if (Math.random() < 0.03) {
+        if (Math.random() > 0.5) {
+          setScoreA(prev => prev + 1);
+        } else {
+          setScoreB(prev => prev + 1);
+        }
+      }
+    }, 1000 * 30);
+    return () => clearInterval(interval);
+  }, []);
+
 
   return (
     <View style={styles.container}>
@@ -38,13 +59,13 @@ export function HomeScreen() {
             />
           </View>
 
-          {/* Seção Partidas com ImageBackground */}
+          {/* Seção Partidas */}
           <View style={styles.section}>
             <Text style={styles.welcomeText}>
               Bem-vindo, <Text style={styles.welcomeName}>{(user as any)?.name || 'Jogador'}.</Text>
             </Text>
             <Text style={styles.sectionTitle}>PARTIDAS</Text>
-            {/* O card agora é um ImageBackground */}
+            
             <ImageBackground
               source={require('../assets/card.png')}
               style={styles.matchCardBackground}
@@ -53,19 +74,24 @@ export function HomeScreen() {
               <View style={styles.cardContent}>
                 <View style={styles.matchInfo}>
                   <View style={styles.team}>
-                    <Image source={{ uri: 'https://placehold.co/50x50/003366/FFFFFF?text=CFC' }} style={styles.teamLogo} />
+                    <Image source={{ uri: `https://avatar.iran.liara.run/public/boy?username=TeamA` }} style={styles.teamLogo} />
                     <Text style={styles.teamName}>TIME A</Text>
                   </View>
                   <View style={styles.scoreContainer}>
-                    <Text style={styles.scoreText}>1 : 2</Text>
-                    <Text style={styles.matchStatus}>AO VIVO</Text>
+                    <Text style={styles.scoreText}>{scoreA} : {scoreB}</Text>
+                    <Text style={styles.matchStatus}>{matchMinute}' AO VIVO</Text>
                   </View>
                   <View style={styles.team}>
-                    <Image source={{ uri: 'https://placehold.co/50x50/0053A0/FFFFFF?text=LC' }} style={styles.teamLogo} />
+                    <Image source={{ uri: `https://avatar.iran.liara.run/public/boy?username=TeamB` }} style={styles.teamLogo} />
                     <Text style={styles.teamName}>TIME B</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.cardButton}>
+                {/* 1. O TouchableOpacity agora navega para os detalhes da partida */}
+                <TouchableOpacity 
+                  style={styles.cardButton}
+                  // 2. Usamos a navegação aninhada para ir para a tela de detalhes dentro da pilha de Partidas
+                  onPress={() => navigation.navigate('PartidasStack', { screen: 'MatchDetail' })}
+                >
                   <Text style={styles.cardButtonText}>VER PARTIDAS</Text>
                 </TouchableOpacity>
               </View>
@@ -75,7 +101,7 @@ export function HomeScreen() {
           {/* Seção Quadras */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>QUADRAS</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Mapa')}>
               <ImageBackground
                 source={require('../assets/card.png')}
                 style={styles.imageCard}
@@ -95,7 +121,7 @@ export function HomeScreen() {
           {/* Seção Locação */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>LOCAÇÃO</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Locação')}>
               <ImageBackground
                 source={require('../assets/card.png')}
                 style={styles.imageCard}
@@ -154,13 +180,12 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing.medium,
   },
-  // Estilo para o ImageBackground do card de partida
   matchCardBackground: {
     borderRadius: theme.radius.medium,
     backgroundColor: theme.colors.primary,
     elevation: 3,
     justifyContent: 'space-between',
-    overflow: 'hidden', // Garante que o imageStyle (borderRadius) seja aplicado
+    overflow: 'hidden',
   },
   matchInfo: {
     flexDirection: 'row',
@@ -176,6 +201,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginBottom: theme.spacing.small,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   teamName: {
     color: theme.colors.white,
@@ -232,7 +258,7 @@ const styles = StyleSheet.create({
   },
   tag: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 15,
     paddingVertical: 5,
     paddingHorizontal: 10,

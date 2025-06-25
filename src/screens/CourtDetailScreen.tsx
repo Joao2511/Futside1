@@ -1,4 +1,3 @@
-// src/screens/CourtDetailScreen.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -46,12 +45,9 @@ export function CourtDetailScreen() {
 
     // Função para formatar o input de tempo
     const handleTimeChange = (text: string) => {
-        // Remove qualquer caracter que não seja um número
         const numericText = text.replace(/[^0-9]/g, '');
-        // Limita o input a 4 dígitos
         const limitedText = numericText.slice(0, 4);
     
-        // Adiciona os ":" automaticamente
         if (limitedText.length > 2) {
             const formattedText = `${limitedText.slice(0, 2)}:${limitedText.slice(2)}`;
             setMatchTime(formattedText);
@@ -134,8 +130,8 @@ export function CourtDetailScreen() {
                                 placeholderTextColor={theme.colors.placeholder}
                                 keyboardType="numeric"
                                 value={matchTime}
-                                onChangeText={handleTimeChange} // Usando a nova função de formatação
-                                maxLength={5} // Limita o input a 5 caracteres (00:00)
+                                onChangeText={handleTimeChange}
+                                maxLength={5}
                             />
                         </View>
                         
@@ -144,7 +140,11 @@ export function CourtDetailScreen() {
                             <StarRating rating={4} />
                         </View>
                         
-                        <TouchableOpacity style={styles.createButton}>
+                        <TouchableOpacity
+                            style={styles.createButton}
+                            // AQUI ESTÁ A CORREÇÃO: Navegando para a pilha 'PartidasStack' e depois para a tela 'Lobby' dentro dela
+                            onPress={() => navigation.navigate('PartidasStack', { screen: 'Lobby', params: { courtName, selectedPlayers, matchTime, organizer } })}
+                        >
                             <Text style={styles.createButtonText}>CRIAR PARTIDA</Text>
                         </TouchableOpacity>
                     </ImageBackground>
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.white,
         borderRadius: theme.radius.medium,
         paddingHorizontal: theme.spacing.medium,
-        height: 50, 
+        height: 50,
         fontSize: 16,
     },
     optionsContainer: {

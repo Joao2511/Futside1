@@ -8,60 +8,67 @@ import {
     Image,
     TouchableOpacity,
     StatusBar,
-    ImageBackground, // 1. Importar ImageBackground
+    ImageBackground,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
+import { useNavigation } from '@react-navigation/native';
 
-// 2. Componente MatchCard agora usa ImageBackground
-const MatchCard = ({ teamA, teamB, score, location }: { teamA: any, teamB: any, score: string, location: string }) => (
-    <ImageBackground
-        source={require('../assets/card.png')}
-        style={styles.matchCardBackground}
-        imageStyle={{ borderRadius: theme.radius.medium }}
-    >
-        <View style={styles.cardContent}>
-            <View style={styles.matchInfo}>
-                <View style={styles.team}>
-                    <Image source={{ uri: teamA.logo }} style={styles.teamLogo} />
-                    <Text style={styles.teamName}>{teamA.name}</Text>
-                </View>
-                <View style={styles.scoreContainer}>
-                    <Text style={styles.matchLocation}>{location}</Text>
-                    <Text style={styles.scoreText}>{score}</Text>
-                    <View style={styles.liveStatus}>
-                        <View style={styles.liveDot} />
-                        <Text style={styles.matchStatus}>AO VIVO</Text>
+const MatchCard = ({ teamA, teamB, score, location }: { teamA: any, teamB: any, score: string, location: string }) => {
+    const navigation = useNavigation();
+    return (
+        <ImageBackground
+            source={require('../assets/card.png')}
+            style={styles.matchCardBackground}
+            imageStyle={{ borderRadius: theme.radius.medium }}
+        >
+            <View style={styles.cardContent}>
+                <View style={styles.matchInfo}>
+                    <View style={styles.team}>
+                        <Image source={{ uri: teamA.logo }} style={styles.teamLogo} />
+                        <Text style={styles.teamName}>{teamA.name}</Text>
+                    </View>
+                    <View style={styles.scoreContainer}>
+                        <Text style={styles.matchLocation}>{location}</Text>
+                        <Text style={styles.scoreText}>{score}</Text>
+                        <View style={styles.liveStatus}>
+                            <View style={styles.liveDot} />
+                            <Text style={styles.matchStatus}>AO VIVO</Text>
+                        </View>
+                    </View>
+                    <View style={styles.team}>
+                        <Image source={{ uri: teamB.logo }} style={styles.teamLogo} />
+                        <Text style={styles.teamName}>{teamB.name}</Text>
                     </View>
                 </View>
-                <View style={styles.team}>
-                    <Image source={{ uri: teamB.logo }} style={styles.teamLogo} />
-                    <Text style={styles.teamName}>{teamB.name}</Text>
-                </View>
+                <TouchableOpacity
+                    style={styles.cardButton}
+                    onPress={() => navigation.navigate('MatchDetail')}
+                >
+                    <Text style={styles.cardButtonText}>SOBRE A PARTIDA</Text>
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.cardButton}>
-                <Text style={styles.cardButtonText}>SOBRE A PARTIDA</Text>
-            </TouchableOpacity>
-        </View>
-    </ImageBackground>
-);
+        </ImageBackground>
+    );
+};
 
 export function PartidasScreen() {
     const insets = useSafeAreaInsets();
+    const navigation = useNavigation();
 
     const mockMatches = [
         {
             location: 'Quadra 405 Norte',
             score: '1 : 2',
-            teamA: { name: 'TIME A', logo: 'https://placehold.co/50x50/003366/FFFFFF?text=CFC' },
-            teamB: { name: 'TIME B', logo: 'https://placehold.co/50x50/0053A0/FFFFFF?text=LC' },
+            teamA: { name: 'TIME A', logo: 'https://avatar.iran.liara.run/public/boy?username=TeamA' },
+            teamB: { name: 'TIME B', logo: 'https://avatar.iran.liara.run/public/boy?username=TeamB' },
         },
         {
             location: 'Quadra 108/109 Norte',
             score: '1 : 2',
-            teamA: { name: 'TIME C', logo: 'https://placehold.co/50x50/FDB913/000000?text=WW' },
-            teamB: { name: 'TIME D', logo: 'https://placehold.co/50x50/6CABDD/FFFFFF?text=MC' },
+            teamA: { name: 'TIME C', logo: 'https://avatar.iran.liara.run/public/boy?username=TeamC' },
+            teamB: { name: 'TIME D', logo: 'https://avatar.iran.liara.run/public/boy?username=TeamD' },
         },
     ];
 
@@ -87,10 +94,11 @@ export function PartidasScreen() {
                     />
                 </View>
 
-                {/* 3. Seção Criar Partida agora usa ImageBackground */}
+                {/* Seção Criar Partida com navegação */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>CRIAR PARTIDA</Text>
-                    <TouchableOpacity>
+                    {/* O TouchableOpacity agora navega para a tela de Mapa */}
+                    <TouchableOpacity onPress={() => navigation.navigate('Mapa')}>
                         <ImageBackground
                             source={require('../assets/card.png')}
                             style={styles.createMatchCard}
@@ -204,6 +212,7 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 25,
         marginBottom: theme.spacing.small,
+        backgroundColor: 'rgba(255,255,255,0.2)'
     },
     teamName: {
         color: theme.colors.white,

@@ -5,15 +5,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
 
 import { HomeScreen } from '../screens/HomeScreen';
-import { PartidasScreen } from '../screens/PartidasScreen';
 import { MapaScreen } from '../screens/MapaScreen';
 import { LocacaoScreen } from '../screens/LocacaoScreen';
 import { ProfileStackRoutes } from './profile.stack.routes';
+import { PartidasStackRoutes } from './partidas.stack.routes'; // Importa a nova pilha
 import { theme } from '../theme';
 
 const { Navigator, Screen } = createBottomTabNavigator();
 
-// Componente para o botão customizado do Mapa
 const CustomMapButton = ({ children, onPress }: { children: any, onPress: any }) => (
     <TouchableOpacity
         style={styles.mapButtonContainer}
@@ -25,7 +24,6 @@ const CustomMapButton = ({ children, onPress }: { children: any, onPress: any })
     </TouchableOpacity>
 );
 
-// Este componente agora contém APENAS a navegação por abas
 export function TabRoutes() {
   return (
     <Navigator
@@ -43,14 +41,54 @@ export function TabRoutes() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
+          fontWeight: 'bold',
         },
       }}
     >
-        <Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Início', tabBarIcon: ({ color, size }) => (<Icon name="home" color={color} size={size} />), }} />
-        <Screen name="Partidas" component={PartidasScreen} options={{ tabBarLabel: 'Partidas', tabBarIcon: ({ color, size }) => (<Icon name="shield" color={color} size={size} />), }} />
-        <Screen name="Mapa" component={MapaScreen} options={{ tabBarLabel: '', tabBarButton: (props) => ( <CustomMapButton {...props}><Icon name="map" color={theme.colors.primary} size={30} /></CustomMapButton>)}}/>
-        <Screen name="Locação" component={LocacaoScreen} options={{ tabBarLabel: 'Locação', tabBarIcon: ({ color, size }) => (<Icon name="calendar" color={color} size={size} />), }} />
-        <Screen name="Perfil" component={ProfileStackRoutes} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({ color, size }) => (<Icon name="user" color={color} size={size} />), }} />
+        <Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+                tabBarLabel: 'Início',
+                tabBarIcon: ({ color, size }) => (<Icon name="home" color={color} size={size} />),
+            }}
+        />
+        <Screen
+            name="PartidasStack" // A aba agora aponta para a pilha
+            component={PartidasStackRoutes}
+            options={{
+                tabBarLabel: 'Partidas',
+                tabBarIcon: ({ color, size }) => (<Icon name="shield" color={color} size={size} />),
+            }}
+        />
+        <Screen
+            name="Mapa"
+            component={MapaScreen}
+            options={{
+                tabBarLabel: '',
+                tabBarButton: (props) => (
+                    <CustomMapButton {...props}>
+                        <Icon name="map" color={theme.colors.primary} size={30} />
+                    </CustomMapButton>
+                )
+            }}
+        />
+        <Screen
+            name="Locação"
+            component={LocacaoScreen}
+            options={{
+                tabBarLabel: 'Locação',
+                tabBarIcon: ({ color, size }) => (<Icon name="calendar" color={color} size={size} />),
+            }}
+        />
+        <Screen
+            name="Perfil"
+            component={ProfileStackRoutes}
+            options={{
+                tabBarLabel: 'Perfil',
+                tabBarIcon: ({ color, size }) => (<Icon name="user" color={color} size={size} />),
+            }}
+        />
     </Navigator>
   );
 }
@@ -69,5 +107,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2},
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
     },
 });

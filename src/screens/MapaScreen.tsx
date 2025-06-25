@@ -1,9 +1,8 @@
-// src/screens/MapaScreen.tsx
-import React, { useRef, useCallback } from 'react'; // 1. Importar os hooks necessários
+import React, { useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, StatusBar } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native'; // 2. Importar o useFocusEffect
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
 
 // Coordenadas iniciais para centralizar o mapa em Brasília, Asa Norte.
@@ -26,10 +25,10 @@ const mockCourts = [
 export function MapaScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    // 3. Criar uma referência para podermos "conversar" com o componente do mapa
+    // Criar uma referência para podermos "conversar" com o componente do mapa
     const mapRef = useRef<MapView>(null);
 
-    // 4. Este hook é executado TODA VEZ que a tela do mapa entra em foco
+    // Este hook é executado TODA VEZ que a tela do mapa entra em foco
     useFocusEffect(
         useCallback(() => {
             // Um pequeno atraso garante que o mapa foi completamente renderizado antes de tentarmos animá-lo
@@ -37,7 +36,7 @@ export function MapaScreen() {
                 mapRef.current?.animateToRegion(initialRegion, 1000); // 1000ms para uma animação suave
             }, 100);
 
-            // Esta função de limpeza é importante para evitar erros se o utilizador navegar muito rápido
+            // Esta função de limpeza é importante para evitar leaks de memória
             return () => clearTimeout(timeout);
         }, [])
     );
@@ -50,7 +49,7 @@ export function MapaScreen() {
                 barStyle="dark-content"
             />
             <MapView
-                ref={mapRef} // 5. Ligar a nossa referência ao componente MapView
+                ref={mapRef} // Ligar a nossa referência ao componente MapView
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 initialRegion={initialRegion}
@@ -62,16 +61,21 @@ export function MapaScreen() {
                         coordinate={court.coordinate}
                         title={court.title}
                         pinColor={theme.colors.primary}
-                        onPress={() => navigation.navigate('CourtDetail', {
-                            courtName: court.title,
-                            image: court.image
+                        // AQUI ESTÁ A ALTERAÇÃO:
+                        // Navegando para a aba 'PartidasStack' e, em seguida, para a tela 'CourtDetail' dentro dela.
+                        onPress={() => navigation.navigate('PartidasStack', {
+                            screen: 'CourtDetail', // Nome da tela dentro da PartidasStack
+                            params: { // Parâmetros que serão passados para CourtDetailScreen
+                                courtName: court.title,
+                                image: court.image
+                            }
                         })}
                     />
                 ))}
             </MapView>
 
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                 <Text style={styles.headerTitle}>QUADRAS ESPORTIVAS</Text>
+                   <Text style={styles.headerTitle}>QUADRAS ESPORTIVAS</Text>
             </View>
         </View>
     );
@@ -93,6 +97,10 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         alignItems: 'center',
         elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
     },
     headerTitle: {
         fontSize: 18,
