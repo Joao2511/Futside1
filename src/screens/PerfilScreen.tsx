@@ -1,4 +1,3 @@
-// src/screens/PerfilScreen.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -30,6 +29,12 @@ export function PerfilScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const [isAddFriendModalVisible, setAddFriendModalVisible] = useState(false);
+
+    // Função para navegar para o histórico de partidas
+    const handleViewMatchHistory = () => {
+        // Navega para a tela 'MatchHistory' que está dentro da pilha de Profile
+        navigation.navigate('MatchHistory');
+    };
 
     return (
         <View style={styles.container}>
@@ -78,7 +83,11 @@ export function PerfilScreen() {
 
                 {/* Estatísticas */}
                 <View style={styles.statsContainer}>
-                    <StatItem value={48} label="PARTIDAS" />
+                    <StatItem
+                        value={48}
+                        label="PARTIDAS"
+                        onPress={handleViewMatchHistory} // Adiciona o onPress aqui
+                    />
                     <View style={styles.statsSeparator} />
                     <StatItem
                         value={12}
