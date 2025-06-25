@@ -26,8 +26,8 @@ const mockMatchHistory = [
         id: '2',
         courtName: 'Campo Society - Lago Norte',
         score: '1 - 1',
-        teamA: { name: 'Os Feras', logo: 'https://placehold.co/40x40/008000/FFFFFF?text=OF' },
-        teamB: { name: 'Os Invencíveis', logo: 'https://placehold.co/40x40/800080/FFFFFF?text=OI' },
+        teamA: { name: 'Time A', logo: 'https://placehold.co/40x40/008000/FFFFFF?text=OF' },
+        teamB: { name: 'Time B', logo: 'https://placehold.co/40x40/800080/FFFFFF?text=OI' },
         date: '2024-06-18',
     },
     {
