@@ -1,0 +1,243 @@
+// src/screens/PartidasScreen.tsx
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Image,
+    TouchableOpacity,
+    StatusBar,
+} from 'react-native';
+// 1. Importar o hook da biblioteca
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Feather';
+import { theme } from '../theme';
+
+const MatchCard = ({ teamA, teamB, score, location }: { teamA: any, teamB: any, score: string, location: string }) => (
+    <View style={styles.matchCard}>
+        <View style={styles.matchInfo}>
+            <View style={styles.team}>
+                <Image source={{ uri: teamA.logo }} style={styles.teamLogo} />
+                <Text style={styles.teamName}>{teamA.name}</Text>
+            </View>
+            <View style={styles.scoreContainer}>
+                <Text style={styles.matchLocation}>{location}</Text>
+                <Text style={styles.scoreText}>{score}</Text>
+                <View style={styles.liveStatus}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.matchStatus}>AO VIVO</Text>
+                </View>
+            </View>
+            <View style={styles.team}>
+                <Image source={{ uri: teamB.logo }} style={styles.teamLogo} />
+                <Text style={styles.teamName}>{teamB.name}</Text>
+            </View>
+        </View>
+        <TouchableOpacity style={styles.cardButton}>
+            <Text style={styles.cardButtonText}>SOBRE A PARTIDA</Text>
+        </TouchableOpacity>
+    </View>
+);
+
+export function PartidasScreen() {
+    // 2. Obter o valor do espaçamento do topo
+    const insets = useSafeAreaInsets();
+
+    const mockMatches = [
+        {
+            location: 'Quadra 405 Norte',
+            score: '1 : 2',
+            teamA: { name: 'TIME A', logo: 'https://placehold.co/50x50/003366/FFFFFF?text=CFC' },
+            teamB: { name: 'TIME B', logo: 'https://placehold.co/50x50/0053A0/FFFFFF?text=LC' },
+        },
+        {
+            location: 'Quadra 108/109 Norte',
+            score: '1 : 2',
+            teamA: { name: 'TIME C', logo: 'https://placehold.co/50x50/FDB913/000000?text=WW' },
+            teamB: { name: 'TIME D', logo: 'https://placehold.co/50x50/6CABDD/FFFFFF?text=MC' },
+        },
+    ];
+
+    return (
+        <View style={styles.container}>
+            <StatusBar
+                translucent
+                backgroundColor="transparent"
+                barStyle="dark-content"
+            />
+            {/* 3. View amarela para o fundo da StatusBar */}
+            <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
+
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>PARTIDAS</Text>
+                </View>
+
+                <View style={styles.logoContainer}>
+                    <Image
+                        source={require('../assets/logo2.png')}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                {/* Seção Criar Partida */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>CRIAR PARTIDA</Text>
+                    <TouchableOpacity style={styles.createMatchCard}>
+                        <View>
+                             <View style={styles.solidCardSubtitleContainer}>
+                                <Icon name="arrow-right-circle" size={16} color={theme.colors.white} />
+                                <Text style={styles.solidCardSubtitle}>CRIAÇÃO DE PARTIDAS</Text>
+                            </View>
+                            <Text style={styles.createMatchTitle}>CRIE SUA PARTIDA</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+                
+                {/* Seção Partidas ao Vivo */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>PARTIDAS AO VIVO</Text>
+                    {mockMatches.map((match, index) => (
+                        <MatchCard key={index} {...match} />
+                    ))}
+                </View>
+            </ScrollView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+        paddingBottom: 90, // Espaço para a TabBar
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: theme.spacing.medium,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: theme.colors.text,
+    },
+    logoContainer: {
+        alignItems: 'center',
+        marginBottom: theme.spacing.large,
+    },
+    logo: {
+        height: 80, // Altura padrão
+    },
+    section: {
+        paddingHorizontal: theme.spacing.large,
+        marginBottom: theme.spacing.large,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: theme.colors.text,
+        marginBottom: theme.spacing.medium,
+    },
+    createMatchCard: {
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.medium,
+        height: 140,
+        justifyContent: 'center',
+        padding: theme.spacing.medium,
+        elevation: 3,
+    },
+    solidCardSubtitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    solidCardSubtitle: {
+        color: theme.colors.white,
+        marginLeft: theme.spacing.small,
+        opacity: 0.8,
+        fontSize: 12,
+    },
+    createMatchTitle: {
+        color: theme.colors.white,
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: theme.spacing.small,
+    },
+    matchCard: {
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.medium,
+        padding: theme.spacing.medium,
+        elevation: 3,
+        marginBottom: theme.spacing.medium,
+    },
+    matchInfo: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    team: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    teamLogo: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        marginBottom: theme.spacing.small,
+    },
+    teamName: {
+        color: theme.colors.white,
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+    scoreContainer: {
+        alignItems: 'center',
+        marginHorizontal: theme.spacing.small,
+    },
+    matchLocation: {
+        color: theme.colors.white,
+        fontSize: 12,
+        opacity: 0.8,
+        marginBottom: 4,
+    },
+    scoreText: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: theme.colors.white,
+    },
+    liveStatus: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    liveDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#FF6347',
+        marginRight: 5,
+    },
+    matchStatus: {
+        color: theme.colors.white,
+        fontSize: 10,
+        fontWeight: 'bold',
+        opacity: 0.8,
+    },
+    cardButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: theme.radius.medium,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: theme.spacing.medium,
+    },
+    cardButtonText: {
+        color: theme.colors.primary,
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+});
