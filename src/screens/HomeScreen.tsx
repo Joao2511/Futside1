@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  ImageBackground, // 1. Importar o ImageBackground
 } from 'react-native';
-// 1. Importar o hook da biblioteca
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
@@ -17,18 +17,15 @@ import { useAuth } from '../hooks/useAuth';
 
 export function HomeScreen() {
   const { user } = useAuth();
-  // 2. Obter o valor do espaçamento do topo (a área da status bar)
   const insets = useSafeAreaInsets();
 
   return (
-    // O container principal não precisa mais de padding manual
     <View style={styles.container}>
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="dark-content"
       />
-      {/* 3. Esta View amarela serve como fundo para a StatusBar e usa a altura exata do inset */}
       <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
 
       <ScrollView>
@@ -41,59 +38,78 @@ export function HomeScreen() {
             />
           </View>
 
-          {/* Seção Partidas */}
-          <Text style={styles.welcomeText}>
-            Bem-vindo, <Text style={styles.welcomeName}>{(user as any)?.name || 'Jogador'}.</Text>
-          </Text>
+          {/* Seção Partidas com ImageBackground */}
           <View style={styles.section}>
+            <Text style={styles.welcomeText}>
+              Bem-vindo, <Text style={styles.welcomeName}>{(user as any)?.name || 'Jogador'}.</Text>
+            </Text>
             <Text style={styles.sectionTitle}>PARTIDAS</Text>
-            <View style={styles.matchCard}>
-              <View style={styles.matchInfo}>
-                <View style={styles.team}>
-                  <Image source={{ uri: 'https://placehold.co/50x50/003366/FFFFFF?text=CFC' }} style={styles.teamLogo} />
-                  <Text style={styles.teamName}>TIME A</Text>
+            {/* O card agora é um ImageBackground */}
+            <ImageBackground
+              source={require('../assets/card.png')}
+              style={styles.matchCardBackground}
+              imageStyle={{ borderRadius: theme.radius.medium }}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.matchInfo}>
+                  <View style={styles.team}>
+                    <Image source={{ uri: 'https://placehold.co/50x50/003366/FFFFFF?text=CFC' }} style={styles.teamLogo} />
+                    <Text style={styles.teamName}>TIME A</Text>
+                  </View>
+                  <View style={styles.scoreContainer}>
+                    <Text style={styles.scoreText}>1 : 2</Text>
+                    <Text style={styles.matchStatus}>AO VIVO</Text>
+                  </View>
+                  <View style={styles.team}>
+                    <Image source={{ uri: 'https://placehold.co/50x50/0053A0/FFFFFF?text=LC' }} style={styles.teamLogo} />
+                    <Text style={styles.teamName}>TIME B</Text>
+                  </View>
                 </View>
-                <View style={styles.scoreContainer}>
-                  <Text style={styles.scoreText}>1 : 2</Text>
-                  <Text style={styles.matchStatus}>AO VIVO</Text>
-                </View>
-                <View style={styles.team}>
-                  <Image source={{ uri: 'https://placehold.co/50x50/0053A0/FFFFFF?text=LC' }} style={styles.teamLogo} />
-                  <Text style={styles.teamName}>TIME B</Text>
-                </View>
+                <TouchableOpacity style={styles.cardButton}>
+                  <Text style={styles.cardButtonText}>VER PARTIDAS</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.cardButton}>
-                <Text style={styles.cardButtonText}>VER PARTIDAS</Text>
-              </TouchableOpacity>
-            </View>
+            </ImageBackground>
           </View>
 
           {/* Seção Quadras */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>QUADRAS</Text>
-            <TouchableOpacity style={styles.solidCard}>
-              <View>
-                <Text style={styles.solidCardTitle}>QUADRAS DISPONÍVEIS</Text>
-                <View style={styles.solidCardSubtitleContainer}>
-                  <Icon name="arrow-right-circle" size={18} color={theme.colors.primary} />
-                  <Text style={styles.solidCardSubtitle}>VER QUADRAS POR PERTO</Text>
+            <TouchableOpacity>
+              <ImageBackground
+                source={require('../assets/card.png')}
+                style={styles.imageCard}
+                imageStyle={{ borderRadius: theme.radius.medium }}
+              >
+                <View style={styles.cardContent}>
+                  <Text style={styles.imageCardTitle}>QUADRAS DISPONÍVEIS</Text>
+                  <View style={styles.imageCardSubtitleContainer}>
+                    <Icon name="arrow-right-circle" size={18} color={theme.colors.white} />
+                    <Text style={styles.imageCardSubtitle}>VER QUADRAS POR PERTO</Text>
+                  </View>
                 </View>
-              </View>
+              </ImageBackground>
             </TouchableOpacity>
           </View>
 
           {/* Seção Locação */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>LOCAÇÃO</Text>
-            <TouchableOpacity style={styles.solidCard}>
-              <View>
-                <View style={styles.tag}>
-                  <Icon name="dribbble" size={14} color={theme.colors.text} />
-                  <Text style={styles.tagText}>Football</Text>
+            <TouchableOpacity>
+              <ImageBackground
+                source={require('../assets/card.png')}
+                style={styles.imageCard}
+                imageStyle={{ borderRadius: theme.radius.medium }}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.tag}>
+                    <Icon name="dribbble" size={14} color={theme.colors.text} />
+                    <Text style={styles.tagText}>Football</Text>
+                  </View>
+                  <Text style={styles.locationTitle}>Real Society</Text>
+                  <Text style={styles.locationAddress}>S/n Trecho 3 21, Setor Hípico Sul, DF</Text>
                 </View>
-                <Text style={styles.locationTitleSolid}>Real Society</Text>
-                <Text style={styles.locationAddressSolid}>S/n Trecho 3 21, Setor Hípico Sul, DF</Text>
-              </View>
+              </ImageBackground>
             </TouchableOpacity>
           </View>
         </View>
@@ -116,7 +132,7 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.large,
   },
   logo: {
-    height: 80,
+    height: 120,
   },
   welcomeText: {
     fontSize: 22,
@@ -138,15 +154,13 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing.medium,
   },
-  matchCard: {
-    backgroundColor: theme.colors.primary,
+  // Estilo para o ImageBackground do card de partida
+  matchCardBackground: {
     borderRadius: theme.radius.medium,
-    padding: theme.spacing.medium,
+    backgroundColor: theme.colors.primary,
     elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    justifyContent: 'space-between',
+    overflow: 'hidden', // Garante que o imageStyle (borderRadius) seja aplicado
   },
   matchInfo: {
     flexDirection: 'row',
@@ -192,26 +206,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  solidCard: {
-    backgroundColor: '#E8F5E9',
+  imageCard: {
+    height: 150,
     borderRadius: theme.radius.medium,
-    padding: theme.spacing.medium,
-    height: 140,
     justifyContent: 'center',
+    backgroundColor: theme.colors.primary, 
   },
-  solidCardTitle: {
-    color: theme.colors.primary,
+  cardContent: {
+    padding: theme.spacing.medium,
+  },
+  imageCardTitle: {
+    color: theme.colors.white,
     fontSize: 20,
     fontWeight: 'bold',
   },
-  solidCardSubtitleContainer: {
+  imageCardSubtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: theme.spacing.small,
   },
-  solidCardSubtitle: {
-    color: theme.colors.primary,
+  imageCardSubtitle: {
+    color: theme.colors.white,
     marginLeft: theme.spacing.small,
+    opacity: 0.9,
   },
   tag: {
     flexDirection: 'row',
@@ -222,20 +239,19 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     alignItems: 'center',
     marginBottom: theme.spacing.medium,
-    borderWidth: 1,
-    borderColor: '#DDD'
   },
   tagText: {
     color: theme.colors.text,
     marginLeft: theme.spacing.small,
     fontWeight: 'bold',
   },
-  locationTitleSolid: {
-    color: theme.colors.text,
+  locationTitle: {
+    color: theme.colors.white,
     fontSize: 22,
     fontWeight: 'bold',
   },
-  locationAddressSolid: {
-    color: theme.colors.placeholder,
+  locationAddress: {
+    color: theme.colors.white,
+    opacity: 0.9,
   }
 });

@@ -6,51 +6,76 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    StatusBar
+    StatusBar,
+    Image,
 } from 'react-native';
-// 1. Importar o hook da biblioteca
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 
-// Dados de exemplo para as quadras
+// 1. Dados com as NOVAS URLs de imagens que você forneceu
 const mockCourts = [
     {
         id: '1',
         name: 'Real Society',
         address: 'S/n Trecho 3 21, Setor Hípico Sul, DF, 70610-000',
+        image: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=687&auto=format&fit=crop'
     },
     {
         id: '2',
         name: 'Amarelinho Society',
         address: 'Colônia Agrícola Águas Claras, Chácara 36 nº 17',
+        image: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=686&auto=format&fit=crop'
     },
     {
         id: '3',
         name: 'Society do Toni',
         address: 'St. de Indústrias Q 5 - Sobradinho, Brasília - DF, 70297-400',
+        image: 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=749&auto=format&fit=crop'
     }
 ];
 
-// Componente reutilizável para o card de locação (agora com cor sólida)
+// Componente LocationCard refatorado com a ordem de camadas correta
 const LocationCard = ({ court }: { court: typeof mockCourts[0] }) => (
-    <TouchableOpacity style={styles.cardContainer}>
-        <View style={styles.tag}>
-            <Icon name="dribbble" size={14} color={theme.colors.text} />
-            <Text style={styles.tagText}>Campo Society</Text>
+    <TouchableOpacity>
+        <View style={styles.cardContainer}>
+            {/* Camada 0: Imagem do campo */}
+            <Image
+                source={{ uri: court.image }}
+                style={styles.backgroundImage}
+                resizeMode="cover"
+            />
+            
+            {/* Camada 1: Overlay escuro para dar contraste */}
+            <View style={styles.darkOverlay} />
+            
+            {/* Camada 2: Marca d'água do leão (card.png) */}
+            <Image
+                // 2. Corrigindo o caminho do require
+                source={require('../assets/card.png')} 
+                style={styles.cardWatermark}
+                resizeMode="cover"
+            />
+            
+            {/* Camada 3: Conteúdo textual, por cima de tudo */}
+            <View style={styles.cardContent}>
+                <View style={styles.tag}>
+                    <Icon name="dribbble" size={14} color={theme.colors.text} />
+                    <Text style={styles.tagText}>Campo Society</Text>
+                </View>
+                <View>
+                    <Text style={styles.courtName}>{court.name}</Text>
+                    <Text style={styles.courtAddress}>{court.address}</Text>
+                </View>
+                <TouchableOpacity style={styles.cardButton}>
+                    <Text style={styles.cardButtonText}>VER MAIS</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-        <View>
-            <Text style={styles.courtName}>{court.name}</Text>
-            <Text style={styles.courtAddress}>{court.address}</Text>
-        </View>
-        <TouchableOpacity style={styles.cardButton}>
-            <Text style={styles.cardButtonText}>VER MAIS</Text>
-        </TouchableOpacity>
     </TouchableOpacity>
 );
 
 export function LocacaoScreen() {
-    // 2. Obter o valor do espaçamento do topo
     const insets = useSafeAreaInsets();
 
     return (
@@ -60,7 +85,6 @@ export function LocacaoScreen() {
                 backgroundColor="transparent"
                 barStyle="dark-content"
             />
-            {/* 3. View amarela para o fundo da StatusBar */}
             <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
 
             <View style={styles.header}>
@@ -79,7 +103,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
-        // O paddingTop manual não é mais necessário
     },
     header: {
         paddingVertical: theme.spacing.medium,
@@ -93,24 +116,38 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         padding: theme.spacing.large,
-        paddingBottom: 80, // Espaço para não encostar na TabBar
+        paddingBottom: 80,
     },
     cardContainer: {
         height: 180,
         borderRadius: theme.radius.medium,
         marginBottom: theme.spacing.large,
         elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        backgroundColor: theme.colors.primary, // Cor verde sólida
+        backgroundColor: theme.colors.primary,
+        overflow: 'hidden',
+    },
+    backgroundImage: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 0, 
+    },
+    darkOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        zIndex: 1,
+    },
+    cardWatermark: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 2, // Fica sobre o overlay escuro
+    },
+    cardContent: {
+        ...StyleSheet.absoluteFillObject,
         padding: theme.spacing.medium,
         justifyContent: 'space-between',
+        zIndex: 3,
     },
     tag: {
         flexDirection: 'row',
-        backgroundColor: theme.colors.white,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 15,
         paddingVertical: 5,
         paddingHorizontal: 10,
@@ -127,12 +164,18 @@ const styles = StyleSheet.create({
         color: theme.colors.white,
         fontSize: 22,
         fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: -1, height: 1},
+        textShadowRadius: 10
     },
     courtAddress: {
         color: theme.colors.white,
         opacity: 0.9,
         fontSize: 14,
         marginTop: 4,
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: -1, height: 1},
+        textShadowRadius: 10
     },
     cardButton: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',

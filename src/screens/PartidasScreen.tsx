@@ -8,40 +8,46 @@ import {
     Image,
     TouchableOpacity,
     StatusBar,
+    ImageBackground, // 1. Importar ImageBackground
 } from 'react-native';
-// 1. Importar o hook da biblioteca
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 
+// 2. Componente MatchCard agora usa ImageBackground
 const MatchCard = ({ teamA, teamB, score, location }: { teamA: any, teamB: any, score: string, location: string }) => (
-    <View style={styles.matchCard}>
-        <View style={styles.matchInfo}>
-            <View style={styles.team}>
-                <Image source={{ uri: teamA.logo }} style={styles.teamLogo} />
-                <Text style={styles.teamName}>{teamA.name}</Text>
-            </View>
-            <View style={styles.scoreContainer}>
-                <Text style={styles.matchLocation}>{location}</Text>
-                <Text style={styles.scoreText}>{score}</Text>
-                <View style={styles.liveStatus}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.matchStatus}>AO VIVO</Text>
+    <ImageBackground
+        source={require('../assets/card.png')}
+        style={styles.matchCardBackground}
+        imageStyle={{ borderRadius: theme.radius.medium }}
+    >
+        <View style={styles.cardContent}>
+            <View style={styles.matchInfo}>
+                <View style={styles.team}>
+                    <Image source={{ uri: teamA.logo }} style={styles.teamLogo} />
+                    <Text style={styles.teamName}>{teamA.name}</Text>
+                </View>
+                <View style={styles.scoreContainer}>
+                    <Text style={styles.matchLocation}>{location}</Text>
+                    <Text style={styles.scoreText}>{score}</Text>
+                    <View style={styles.liveStatus}>
+                        <View style={styles.liveDot} />
+                        <Text style={styles.matchStatus}>AO VIVO</Text>
+                    </View>
+                </View>
+                <View style={styles.team}>
+                    <Image source={{ uri: teamB.logo }} style={styles.teamLogo} />
+                    <Text style={styles.teamName}>{teamB.name}</Text>
                 </View>
             </View>
-            <View style={styles.team}>
-                <Image source={{ uri: teamB.logo }} style={styles.teamLogo} />
-                <Text style={styles.teamName}>{teamB.name}</Text>
-            </View>
+            <TouchableOpacity style={styles.cardButton}>
+                <Text style={styles.cardButtonText}>SOBRE A PARTIDA</Text>
+            </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.cardButton}>
-            <Text style={styles.cardButtonText}>SOBRE A PARTIDA</Text>
-        </TouchableOpacity>
-    </View>
+    </ImageBackground>
 );
 
 export function PartidasScreen() {
-    // 2. Obter o valor do espaçamento do topo
     const insets = useSafeAreaInsets();
 
     const mockMatches = [
@@ -66,7 +72,6 @@ export function PartidasScreen() {
                 backgroundColor="transparent"
                 barStyle="dark-content"
             />
-            {/* 3. View amarela para o fundo da StatusBar */}
             <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -82,17 +87,23 @@ export function PartidasScreen() {
                     />
                 </View>
 
-                {/* Seção Criar Partida */}
+                {/* 3. Seção Criar Partida agora usa ImageBackground */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>CRIAR PARTIDA</Text>
-                    <TouchableOpacity style={styles.createMatchCard}>
-                        <View>
-                             <View style={styles.solidCardSubtitleContainer}>
-                                <Icon name="arrow-right-circle" size={16} color={theme.colors.white} />
-                                <Text style={styles.solidCardSubtitle}>CRIAÇÃO DE PARTIDAS</Text>
+                    <TouchableOpacity>
+                        <ImageBackground
+                            source={require('../assets/card.png')}
+                            style={styles.createMatchCard}
+                            imageStyle={{ borderRadius: theme.radius.medium }}
+                        >
+                            <View style={styles.cardContent}>
+                                <View style={styles.solidCardSubtitleContainer}>
+                                    <Icon name="arrow-right-circle" size={16} color={theme.colors.white} />
+                                    <Text style={styles.solidCardSubtitle}>CRIAÇÃO DE PARTIDAS</Text>
+                                </View>
+                                <Text style={styles.createMatchTitle}>CRIE SUA PARTIDA</Text>
                             </View>
-                            <Text style={styles.createMatchTitle}>CRIE SUA PARTIDA</Text>
-                        </View>
+                        </ImageBackground>
                     </TouchableOpacity>
                 </View>
                 
@@ -114,7 +125,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.background,
     },
     scrollContent: {
-        paddingBottom: 90, // Espaço para a TabBar
+        paddingBottom: 90,
     },
     header: {
         flexDirection: 'row',
@@ -132,7 +143,7 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.large,
     },
     logo: {
-        height: 80, // Altura padrão
+        height: 80,
     },
     section: {
         paddingHorizontal: theme.spacing.large,
@@ -149,8 +160,8 @@ const styles = StyleSheet.create({
         borderRadius: theme.radius.medium,
         height: 140,
         justifyContent: 'center',
-        padding: theme.spacing.medium,
         elevation: 3,
+        overflow: 'hidden',
     },
     solidCardSubtitleContainer: {
         flexDirection: 'row',
@@ -168,12 +179,16 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginTop: theme.spacing.small,
     },
-    matchCard: {
+    matchCardBackground: {
         backgroundColor: theme.colors.primary,
         borderRadius: theme.radius.medium,
-        padding: theme.spacing.medium,
         elevation: 3,
         marginBottom: theme.spacing.medium,
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+    },
+    cardContent: {
+        padding: theme.spacing.medium,
     },
     matchInfo: {
         flexDirection: 'row',
