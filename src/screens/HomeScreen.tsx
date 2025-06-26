@@ -84,9 +84,9 @@ export function HomeScreen() {
 
                 <TouchableOpacity
                   style={styles.cardButton}
-                  onPress={() => navigation.navigate('PartidasStack', { screen: 'MatchDetail' })}
+                  onPress={() => navigation.navigate('PartidasStack', { screen: 'PartidasList' })}
                 >
-                  <Text style={styles.cardButtonText}>VER PARTIDA</Text>
+                  <Text style={styles.cardButtonText}>VER PARTIDAS</Text>
                 </TouchableOpacity>
               </View>
             </ImageBackground>
