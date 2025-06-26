@@ -3,6 +3,7 @@ import { PerfilScreen } from '../screens/PerfilScreen';
 import { SettingsScreen } from '../screens/SettingsScreen'; // Se você tiver uma tela de configurações
 import { FriendsScreen } from '../screens/FriendsScreen'; // Se você tiver uma tela de amigos
 import { MatchHistoryModal } from '../components/MatchHistoryModal'; // Importe o novo modal
+import { MatchSummaryScreen } from '../screens/MatchSummaryScreen';
 
 const { Navigator, Screen } = createNativeStackNavigator();
 

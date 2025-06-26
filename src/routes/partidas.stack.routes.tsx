@@ -3,6 +3,7 @@ import { PartidasScreen } from '../screens/PartidasScreen';
 import { MatchDetailScreen } from '../screens/MatchDetailScreen';
 import { LobbyScreen } from '../screens/LobbyScreen';
 import { CourtDetailScreen } from '../screens/CourtDetailScreen'; // Mantenha a importação
+import { MatchSummaryScreen } from '../screens/MatchSummaryScreen';
 
 const { Navigator, Screen } = createNativeStackNavigator();
 
@@ -14,6 +15,7 @@ export function PartidasStackRoutes() {
       {/* CourtDetailScreen agora está aqui dentro da pilha de Partidas */}
       <Screen name="CourtDetail" component={CourtDetailScreen} />
       <Screen name="Lobby" component={LobbyScreen} />
+      <Screen name="MatchSummary" component={MatchSummaryScreen} />
     </Navigator>
   );
 }

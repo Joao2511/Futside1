@@ -1,6 +1,6 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { StyleSheet, View, Text, StatusBar } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Region, Camera } from 'react-native-maps'; // Importado Camera e Region
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
@@ -25,21 +25,54 @@ const mockCourts = [
 export function MapaScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    // Criar uma referência para podermos "conversar" com o componente do mapa
     const mapRef = useRef<MapView>(null);
 
-    // Este hook é executado TODA VEZ que a tela do mapa entra em foco
+    // Usar um estado para armazenar a última câmera/região conhecida.
+    // Inicializamos com a região de Brasília.
+    const [lastKnownRegion, setLastKnownRegion] = useState<Region>(initialRegion);
+
+    // `useFocusEffect` para animar a câmera para a última posição conhecida
+    // quando a tela do mapa volta a ficar em foco.
     useFocusEffect(
         useCallback(() => {
-            // Um pequeno atraso garante que o mapa foi completamente renderizado antes de tentarmos animá-lo
-            const timeout = setTimeout(() => {
-                mapRef.current?.animateToRegion(initialRegion, 1000); // 1000ms para uma animação suave
-            }, 100);
-
-            // Esta função de limpeza é importante para evitar leaks de memória
-            return () => clearTimeout(timeout);
-        }, [])
+            console.log('MapaScreen em foco. Última região salva:', lastKnownRegion);
+            if (mapRef.current) {
+                // Anima a câmera do mapa para a última região salva.
+                // Isso é crucial para que o mapa volte ao estado que o usuário deixou.
+                mapRef.current.animateToRegion(lastKnownRegion, 500);
+            }
+            return () => {
+                // Opcional: registrar que a tela está perdendo o foco
+                console.log('MapaScreen perdendo foco.');
+            };
+        }, [lastKnownRegion]) // Dependência: A função se re-executa se 'lastKnownRegion' mudar.
     );
+
+    // Callback para quando o mapa é carregado pela primeira vez.
+    // Usado para definir a câmera inicial se ela ainda não foi definida por uma interação.
+    const handleMapReady = useCallback(() => {
+        if (mapRef.current && mapRef.current.getCamera()) {
+            mapRef.current.animateToRegion(initialRegion, 500);
+            // Captura a região inicial para o estado
+            mapRef.current.getMapBoundaries().then(boundaries => {
+                // getMapBoundaries retorna northEast e southWest. Precisamos converter para Region.
+                // Isso é uma estimativa, o ideal seria ter acesso direto à região inicial do mapa.
+                // Para simplificar, usamos a initialRegion como fallback
+                setLastKnownRegion(initialRegion);
+            }).catch(error => {
+                console.warn('Erro ao obter limites do mapa ao iniciar:', error);
+                setLastKnownRegion(initialRegion);
+            });
+        }
+    }, []);
+
+    // Callback que é chamado continuamente enquanto o usuário interage com o mapa,
+    // e também quando a interação termina. Usaremos onRegionChangeComplete.
+    const handleRegionChangeComplete = useCallback((region: Region) => {
+        // Atualiza o estado com a nova região do mapa após a interação do usuário.
+        setLastKnownRegion(region);
+        console.log('Região do mapa atualizada pelo usuário para:', region);
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -49,23 +82,23 @@ export function MapaScreen() {
                 barStyle="dark-content"
             />
             <MapView
-                ref={mapRef} // Ligar a nossa referência ao componente MapView
+                ref={mapRef} // Referência para manipular o mapa imperativamente
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
-                initialRegion={initialRegion}
+                // REMOVIDO: A prop 'region' e 'initialRegion'.
+                // O controle da câmera agora é feito via `mapRef.current.animateToRegion` ou `animateCamera`.
+                onMapReady={handleMapReady} // Define a câmera inicial quando o mapa estiver pronto
+                onRegionChangeComplete={handleRegionChangeComplete} // Salva a região atual após a interação do usuário
             >
-                {/* Os marcadores são renderizados normalmente, pois fazem parte do componente */}
                 {mockCourts.map(court => (
                     <Marker
                         key={court.id}
                         coordinate={court.coordinate}
                         title={court.title}
                         pinColor={theme.colors.primary}
-                        // AQUI ESTÁ A ALTERAÇÃO:
-                        // Navegando para a aba 'PartidasStack' e, em seguida, para a tela 'CourtDetail' dentro dela.
                         onPress={() => navigation.navigate('PartidasStack', {
-                            screen: 'CourtDetail', // Nome da tela dentro da PartidasStack
-                            params: { // Parâmetros que serão passados para CourtDetailScreen
+                            screen: 'CourtDetail',
+                            params: {
                                 courtName: court.title,
                                 image: court.image
                             }

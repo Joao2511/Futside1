@@ -1,158 +1,124 @@
+// src/components/AddPlayerModal.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Modal,
+    TouchableOpacity,
+    TextInput,
+    Alert
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 
 interface AddPlayerModalProps {
-    isVisible: boolean;
-    onClose: () => void;
-    onAddPlayer: (name: string, role: string, teamId: 'A' | 'B') => void;
-    teamId: 'A' | 'B'; // Para saber em qual time adicionar o jogador
-    totalPlayersPerTeam: number; // Para limitar o número de jogadores por time
-    currentPlayersCount: number; // Para exibir o contador de jogadores
+  isVisible: boolean;
+  onClose: () => void;
+  onAddPlayer: (name: string, role: string, teamId: 'A' | 'B') => void;
+  teamId: 'A' | 'B';
 }
 
-const { width } = Dimensions.get('window');
+export function AddPlayerModal({ isVisible, onClose, onAddPlayer, teamId }: AddPlayerModalProps) {
+    const [name, setName] = useState('');
+    const [role, setRole] = useState('');
 
-export function AddPlayerModal({ isVisible, onClose, onAddPlayer, teamId, totalPlayersPerTeam, currentPlayersCount }: AddPlayerModalProps) {
-    const [playerName, setPlayerName] = useState('');
-    const [playerRole, setPlayerRole] = useState('');
-
-    const handleAddPlayer = () => {
-        if (playerName.trim() && playerRole.trim()) {
-            onAddPlayer(playerName.trim(), playerRole.trim(), teamId);
-            setPlayerName(''); // Limpa o input
-            setPlayerRole(''); // Limpa o input
-            onClose();
-        } else {
-            // Poderia adicionar uma validação visual aqui
-            alert('Por favor, preencha nome e função do jogador.'); // Usando alert provisoriamente, ideal seria um modal customizado
+    const handleAdd = () => {
+        if (!name.trim() || !role.trim()) {
+            Alert.alert("Campos Vazios", "Por favor, preencha o nome e a função do jogador.");
+            return;
         }
+        onAddPlayer(name, role, teamId);
+        setName('');
+        setRole('');
+        onClose();
     };
 
-    return (
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isVisible}
-            onRequestClose={onClose}
-        >
-            <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                    <Text style={styles.modalTitle}>Adicionar Jogador ({teamId})</Text>
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Adicionar Jogador</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Icon name="x" size={24} color={theme.colors.placeholder} />
+            </TouchableOpacity>
+          </View>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Nome do Jogador"
+            placeholderTextColor={theme.colors.placeholder}
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Função (ex: Goleiro, Atacante)"
+            placeholderTextColor={theme.colors.placeholder}
+            value={role}
+            onChangeText={setRole}
+          />
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Nome do Jogador"
-                        placeholderTextColor={theme.colors.placeholder}
-                        value={playerName}
-                        onChangeText={setPlayerName}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Função (Ex: Atacante, Goleiro)"
-                        placeholderTextColor={theme.colors.placeholder}
-                        value={playerRole}
-                        onChangeText={setPlayerRole}
-                    />
-
-                    <View style={styles.playerCountContainer}>
-                        <Text style={styles.playerCountText}>
-                            Jogadores: {currentPlayersCount}/{totalPlayersPerTeam}
-                        </Text>
-                    </View>
-
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                            style={[styles.button, styles.buttonCancel]}
-                            onPress={onClose}
-                        >
-                            <Text style={styles.textStyle}>Cancelar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.button, styles.buttonAdd]}
-                            onPress={handleAddPlayer}
-                        >
-                            <Text style={styles.textStyle}>Adicionar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    );
+          <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+            <Text style={styles.addButtonText}>ADICIONAR</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 const styles = StyleSheet.create({
-    centeredView: {
+    modalOverlay: {
         flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)', // Fundo escuro transparente
     },
-    modalView: {
-        width: width * 0.85, // 85% da largura da tela
-        backgroundColor: theme.colors.background, // Fundo branco do modal
+    modalContainer: {
+        width: '90%',
+        backgroundColor: theme.colors.background,
         borderRadius: theme.radius.medium,
         padding: theme.spacing.large,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
     },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: theme.spacing.large,
-        color: theme.colors.text,
-    },
-    input: {
-        width: '100%',
-        backgroundColor: theme.colors.surface, // Cor de fundo do input
-        borderRadius: theme.radius.small,
-        padding: theme.spacing.medium,
-        marginBottom: theme.spacing.medium,
-        fontSize: 16,
-        color: theme.colors.text,
-    },
-    playerCountContainer: {
-        width: '100%',
-        alignItems: 'flex-end',
-        marginBottom: theme.spacing.medium,
-    },
-    playerCountText: {
-        fontSize: 14,
-        color: theme.colors.placeholder,
-    },
-    buttonContainer: {
+    header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        width: '100%',
-        marginTop: theme.spacing.medium,
-    },
-    button: {
-        borderRadius: theme.radius.medium,
-        padding: theme.spacing.small + 2,
-        elevation: 2,
-        flex: 1, // Faz os botões ocuparem o mesmo espaço
-        marginHorizontal: theme.spacing.small,
         alignItems: 'center',
-        justifyContent: 'center',
+        marginBottom: theme.spacing.large,
     },
-    buttonCancel: {
-        backgroundColor: theme.colors.gray, // Cor cinza para cancelar
-    },
-    buttonAdd: {
-        backgroundColor: theme.colors.yellow, // Cor amarela para adicionar
-    },
-    textStyle: {
-        color: theme.colors.primary, // Cor do texto dos botões
+    headerTitle: {
+        fontSize: 20,
         fontWeight: 'bold',
-        textAlign: 'center',
+        color: theme.colors.text,
+    },
+    closeButton: {
+        padding: 5,
+    },
+    input: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.medium,
+        padding: theme.spacing.medium,
+        fontSize: 16,
+        color: theme.colors.text,
+        marginBottom: theme.spacing.medium,
+    },
+    addButton: {
+        backgroundColor: theme.colors.primary,
+        padding: theme.spacing.medium,
+        borderRadius: theme.radius.medium,
+        alignItems: 'center',
+        marginTop: theme.spacing.small,
+    },
+    addButtonText: {
+        color: theme.colors.white,
+        fontWeight: 'bold',
         fontSize: 16,
     },
 });
