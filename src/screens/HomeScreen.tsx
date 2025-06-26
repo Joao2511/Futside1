@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -16,6 +15,10 @@ import { theme } from '../theme';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 
+// Import dos logos dos times (adicione suas imagens em src/assets/teamA.png e teamB.png)
+const teamALogo = require('../assets/teamA.png');
+const teamBLogo = require('../assets/teamB.png');
+
 export function HomeScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -27,45 +30,32 @@ export function HomeScreen() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMatchMinute(prevMinute => (prevMinute >= 90 ? 90 : prevMinute + 1));
+      setMatchMinute(prev => (prev >= 90 ? 90 : prev + 1));
       if (Math.random() < 0.03) {
-        if (Math.random() > 0.5) {
-          setScoreA(prev => prev + 1);
-        } else {
-          setScoreB(prev => prev + 1);
-        }
+        Math.random() > 0.5 ? setScoreA(prev => prev + 1) : setScoreB(prev => prev + 1);
       }
     }, 1000 * 30);
     return () => clearInterval(interval);
   }, []);
 
-
   return (
     <View style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="dark-content"
-      />
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
 
       <ScrollView>
         <View style={styles.mainContent}>
           <View style={styles.header}>
-            <Image
-              source={require('../assets/logo2.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            <Image source={require('../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
           </View>
 
           {/* Seção Partidas */}
           <View style={styles.section}>
             <Text style={styles.welcomeText}>
-              Bem-vindo, <Text style={styles.welcomeName}>{(user as any)?.name || 'Jogador'}.</Text>
+              Bem-vindo, <Text style={styles.welcomeName}>{user?.name || 'Jogador'}.</Text>
             </Text>
             <Text style={styles.sectionTitle}>PARTIDAS</Text>
-            
+
             <ImageBackground
               source={require('../assets/card.png')}
               style={styles.matchCardBackground}
@@ -73,26 +63,30 @@ export function HomeScreen() {
             >
               <View style={styles.cardContent}>
                 <View style={styles.matchInfo}>
+                  {/* Time A */}
                   <View style={styles.team}>
-                    <Image source={{ uri: `https://avatar.iran.liara.run/public/boy?username=TeamA` }} style={styles.teamLogo} />
+                    <Image source={teamALogo} style={styles.teamLogo} resizeMode="contain" />
                     <Text style={styles.teamName}>TIME A</Text>
                   </View>
+
+                  {/* Placar e status */}
                   <View style={styles.scoreContainer}>
                     <Text style={styles.scoreText}>{scoreA} : {scoreB}</Text>
                     <Text style={styles.matchStatus}>{matchMinute}' AO VIVO</Text>
                   </View>
+
+                  {/* Time B */}
                   <View style={styles.team}>
-                    <Image source={{ uri: `https://avatar.iran.liara.run/public/boy?username=TeamB` }} style={styles.teamLogo} />
+                    <Image source={teamBLogo} style={styles.teamLogo} resizeMode="contain" />
                     <Text style={styles.teamName}>TIME B</Text>
                   </View>
                 </View>
-                {/* 1. O TouchableOpacity agora navega para os detalhes da partida */}
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.cardButton}
-                  // 2. Usamos a navegação aninhada para ir para a tela de detalhes dentro da pilha de Partidas
                   onPress={() => navigation.navigate('PartidasStack', { screen: 'MatchDetail' })}
                 >
-                  <Text style={styles.cardButtonText}>VER PARTIDAS</Text>
+                  <Text style={styles.cardButtonText}>VER PARTIDA</Text>
                 </TouchableOpacity>
               </View>
             </ImageBackground>
@@ -145,139 +139,31 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  mainContent: {
-    paddingBottom: 90,
-  },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.large,
-    paddingTop: theme.spacing.large,
-  },
-  logo: {
-    height: 120,
-  },
-  welcomeText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 16,
-    paddingHorizontal: theme.spacing.large,
-  },
-  welcomeName: {
-    color: theme.colors.primary,
-  },
-  section: {
-    paddingHorizontal: theme.spacing.large,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.medium,
-  },
-  matchCardBackground: {
-    borderRadius: theme.radius.medium,
-    backgroundColor: theme.colors.primary,
-    elevation: 3,
-    justifyContent: 'space-between',
-    overflow: 'hidden',
-  },
-  matchInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  team: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  teamLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: theme.spacing.small,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  teamName: {
-    color: theme.colors.white,
-    fontWeight: 'bold',
-  },
-  scoreContainer: {
-    alignItems: 'center',
-  },
-  scoreText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.white,
-  },
-  matchStatus: {
-    color: theme.colors.white,
-    fontSize: 12,
-    opacity: 0.8,
-  },
-  cardButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: theme.radius.medium,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: theme.spacing.medium,
-  },
-  cardButtonText: {
-    color: theme.colors.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  imageCard: {
-    height: 150,
-    borderRadius: theme.radius.medium,
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary, 
-  },
-  cardContent: {
-    padding: theme.spacing.medium,
-  },
-  imageCardTitle: {
-    color: theme.colors.white,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  imageCardSubtitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.small,
-  },
-  imageCardSubtitle: {
-    color: theme.colors.white,
-    marginLeft: theme.spacing.small,
-    opacity: 0.9,
-  },
-  tag: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 15,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    alignSelf: 'flex-start',
-    alignItems: 'center',
-    marginBottom: theme.spacing.medium,
-  },
-  tagText: {
-    color: theme.colors.text,
-    marginLeft: theme.spacing.small,
-    fontWeight: 'bold',
-  },
-  locationTitle: {
-    color: theme.colors.white,
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  locationAddress: {
-    color: theme.colors.white,
-    opacity: 0.9,
-  }
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  mainContent: { paddingBottom: 90 },
+  header: { alignItems: 'center', paddingHorizontal: theme.spacing.large, paddingTop: theme.spacing.large },
+  logo: { height: 120 },
+  welcomeText: { fontSize: 22, fontWeight: 'bold', color: theme.colors.text, marginBottom: 16, paddingHorizontal: theme.spacing.large },
+  welcomeName: { color: theme.colors.primary },
+  section: { paddingHorizontal: theme.spacing.large, marginBottom: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginBottom: theme.spacing.medium },
+  matchCardBackground: { borderRadius: theme.radius.medium, backgroundColor: theme.colors.primary, elevation: 3, overflow: 'hidden' },
+  cardContent: { padding: theme.spacing.medium },
+  matchInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  team: { alignItems: 'center', flex: 1 },
+  teamLogo: { width: 50, height: 50, marginBottom: theme.spacing.small },
+  teamName: { color: theme.colors.white, fontWeight: 'bold' },
+  scoreContainer: { alignItems: 'center' },
+  scoreText: { fontSize: 28, fontWeight: 'bold', color: theme.colors.white },
+  matchStatus: { color: theme.colors.white, fontSize: 12, opacity: 0.8 },
+  cardButton: { backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: theme.radius.medium, paddingVertical: 12, alignItems: 'center', marginTop: theme.spacing.medium },
+  cardButtonText: { color: theme.colors.primary, fontWeight: 'bold', fontSize: 14 },
+  imageCard: { height: 150, borderRadius: theme.radius.medium, justifyContent: 'center', backgroundColor: theme.colors.primary },
+  imageCardTitle: { color: theme.colors.white, fontSize: 20, fontWeight: 'bold' },
+  imageCardSubtitleContainer: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.small },
+  imageCardSubtitle: { color: theme.colors.white, marginLeft: theme.spacing.small, opacity: 0.9 },
+  tag: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 15, paddingVertical: 5, paddingHorizontal: 10, alignSelf: 'flex-start', alignItems: 'center', marginBottom: theme.spacing.medium },
+  tagText: { color: theme.colors.text, marginLeft: theme.spacing.small, fontWeight: 'bold' },
+  locationTitle: { color: theme.colors.white, fontSize: 22, fontWeight: 'bold' },
+  locationAddress: { color: theme.colors.white, opacity: 0.9 }
 });
