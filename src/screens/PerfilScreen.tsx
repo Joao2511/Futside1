@@ -48,7 +48,7 @@ export function PerfilScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Banner */}
                 <ImageBackground
-                    source={{ uri: 'https://i.imgur.com/u8y4ThC.jpeg' }}
+                    source={{ uri: 'https://www.itl.cat/pngfile/big/202-2025463_willian-wallpaper-meu-sonho-ser-jogador-de-futebol.jpg' }}
                     style={styles.banner}
                 >
                     <View style={styles.bannerOverlay} />
@@ -68,7 +68,7 @@ export function PerfilScreen() {
 
                     <View style={styles.avatarContainer}>
                         <Image
-                            source={{ uri: 'https://i.imgur.com/4z1kL3A.png' }}
+                            source={{ uri: 'https://s.itl.cat/pngfile/s/202-2025465_willian-chelsea-wallpaper-hd-willian-chelsea.jpg' }}
                             style={styles.avatar}
                         />
                     </View>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     },
     statsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         width: '100%',
         paddingVertical: theme.spacing.large,
         backgroundColor: theme.colors.background,
