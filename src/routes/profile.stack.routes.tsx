@@ -4,6 +4,12 @@ import { SettingsScreen } from '../screens/SettingsScreen'; // Se você tiver um
 import { FriendsScreen } from '../screens/FriendsScreen'; // Se você tiver uma tela de amigos
 import { MatchHistoryModal } from '../components/MatchHistoryModal'; // Importe o novo modal
 import { MatchSummaryScreen } from '../screens/MatchSummaryScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
+import { TermsAndPrivacyScreen } from '../screens/ermsAndPrivacyScreen';
+import { HelpAndSupportScreen } from '../screens/HelpAndSupportScreen';
+import { BecomeAManagerScreen } from '../screens/BecomeAManagerScreen';
+import { ReportProblemScreen } from '../screens/ReportProblemScreen';
 
 const { Navigator, Screen } = createNativeStackNavigator();
 
@@ -19,6 +25,12 @@ export function ProfileStackRoutes() {
         component={MatchHistoryModal}
         options={{ presentation: 'modal' }} // Continua abrindo como modal
       />
+      <Screen name="Notifications" component={NotificationsScreen} />
+      <Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Screen name="TermsAndPrivacy" component={TermsAndPrivacyScreen} />
+      <Screen name="HelpAndSupport" component={HelpAndSupportScreen} />
+      <Screen name="BecomeAManager" component={BecomeAManagerScreen} />
+      <Screen name="ReportProblem" component={ReportProblemScreen} />
     </Navigator>
   );
 }

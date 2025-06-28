@@ -51,33 +51,39 @@ export function SettingsScreen() {
                 {/* Seção Minha Conta */}
                 <Text style={styles.sectionTitle}>Minha Conta</Text>
                 <View style={styles.sectionContainer}>
-                    <SettingsItem icon="shield" label="Segurança" />
+                    <SettingsItem icon="bell" label="Notificações" 
+                    onPress={() => navigation.navigate('Notifications')}
+                    />
                     <View style={styles.separator} />
-                    <SettingsItem icon="bell" label="Notificações" />
-                    <View style={styles.separator} />
-                    <SettingsItem icon="lock" label="Privacidade" />
+                    <SettingsItem icon="lock" label="Alterar senha" 
+                    onPress={() => navigation.navigate('ChangePassword')}
+                    />
                 </View>
 
                 {/* Seção Suporte */}
                 <Text style={styles.sectionTitle}>Suporte</Text>
                 <View style={styles.sectionContainer}>
-                    <SettingsItem icon="help-circle" label="Ajuda & Suporte" />
+                    <SettingsItem icon="help-circle" label="Ajuda & Suporte" 
+                    onPress={() => navigation.navigate('HelpAndSupport')}/>
                     <View style={styles.separator} />
-                    <SettingsItem icon="info" label="Termos de Privacidade & Segurança" />
+                    <SettingsItem icon="info" label="Termos de Privacidade & Segurança" 
+                    onPress={() => navigation.navigate('TermsAndPrivacy')}
+                    />
                 </View>
 
                 {/* Seção Outros */}
                 <Text style={styles.sectionTitle}>Outros</Text>
                 <View style={styles.sectionContainer}>
-                    <SettingsItem icon="briefcase" label="Se torne um Gestor" />
+                    <SettingsItem icon="briefcase" label="Se torne um Locador" 
+                    onPress={() => navigation.navigate('BecomeAManager')}/>
                 </View>
 
                 {/* Seção Ações */}
                 <Text style={styles.sectionTitle}>Ações</Text>
                 <View style={styles.sectionContainer}>
-                    <SettingsItem icon="flag" label="Reportar um problema" />
-                    <View style={styles.separator} />
-                    <SettingsItem icon="repeat" label="Trocar de Conta" />
+                    <SettingsItem icon="flag" label="Reportar um problema" 
+                    onPress={() => navigation.navigate('ReportProblem')}
+                    />
                     <View style={styles.separator} />
                     <SettingsItem icon="log-out" label="Sair" onPress={signOut} />
                 </View>
