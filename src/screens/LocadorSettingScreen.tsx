@@ -52,11 +52,11 @@ export function LocadorSettingScreen() {
                 <Text style={styles.sectionTitle}>Minha Conta</Text>
                 <View style={styles.sectionContainer}>
                     <SettingsItem icon="bell" label="Notificações" 
-                    onPress={() => navigation.navigate('Notifications')}
+                    onPress={() => navigation.navigate('LocadorNotifications')}
                     />
                     <View style={styles.separator} />
                     <SettingsItem icon="lock" label="Alterar senha" 
-                    onPress={() => navigation.navigate('ChangePassword')}
+                    onPress={() => navigation.navigate('LocadorChangePassword')}
                     />
                 </View>
 
@@ -64,10 +64,10 @@ export function LocadorSettingScreen() {
                 <Text style={styles.sectionTitle}>Suporte</Text>
                 <View style={styles.sectionContainer}>
                     <SettingsItem icon="help-circle" label="Ajuda & Suporte" 
-                    onPress={() => navigation.navigate('HelpAndSupport')}/>
+                    onPress={() => navigation.navigate('LocadorHelpAndSupport')}/>
                     <View style={styles.separator} />
                     <SettingsItem icon="info" label="Termos de Privacidade & Segurança" 
-                    onPress={() => navigation.navigate('TermsAndPrivacy')}
+                    onPress={() => navigation.navigate('LocadorTermsAndPrivacy')}
                     />
                 </View>
 
@@ -82,7 +82,7 @@ export function LocadorSettingScreen() {
                 <Text style={styles.sectionTitle}>Ações</Text>
                 <View style={styles.sectionContainer}>
                     <SettingsItem icon="flag" label="Reportar um problema" 
-                    onPress={() => navigation.navigate('ReportProblem')}
+                    onPress={() => navigation.navigate('LocadorReportProblem')}
                     />
                     <View style={styles.separator} />
                     <SettingsItem icon="log-out" label="Sair" onPress={signOut} />

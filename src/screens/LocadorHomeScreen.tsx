@@ -91,11 +91,6 @@ export function LocadorHomeScreen() {
                     </TouchableOpacity>
                 </View>
                 
-                 {/* Botão para voltar à visão de jogador */}
-                <TouchableOpacity style={styles.switchButton} onPress={() => switchUserType('player')}>
-                    <Icon name="repeat" size={20} color={theme.colors.primary} />
-                    <Text style={styles.switchButtonText}>Mudar para Visão de Jogador</Text>
-                </TouchableOpacity>
 
             </ScrollView>
         </View>
