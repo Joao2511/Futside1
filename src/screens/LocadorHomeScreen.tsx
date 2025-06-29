@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: theme.colors.primary,
         overflow: 'hidden',
-        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,

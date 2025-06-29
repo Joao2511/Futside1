@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     backButton: { padding: 5 },
     headerTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text },
     scrollContainer: { padding: theme.spacing.large, paddingBottom: 80 },
-    cardContainer: { height: 180, borderRadius: theme.radius.medium, marginBottom: theme.spacing.large, elevation: 5, backgroundColor: theme.colors.primary, overflow: 'hidden' },
+    cardContainer: { height: 180, borderRadius: theme.radius.medium, marginBottom: theme.spacing.large, backgroundColor: theme.colors.primary, overflow: 'hidden' },
     cardOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.3)' },
     cardContent: { padding: theme.spacing.medium, justifyContent: 'space-between', flex: 1 },
     tag: { flexDirection: 'row', backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 15, paddingVertical: 5, paddingHorizontal: 10, alignSelf: 'flex-start', alignItems: 'center' },
