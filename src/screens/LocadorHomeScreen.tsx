@@ -116,7 +116,6 @@ const styles = StyleSheet.create({
     welcomeSection: {
         paddingHorizontal: theme.spacing.large,
         marginBottom: theme.spacing.medium,
-        alignItems: 'center',
     },
     welcomeText: {
         fontSize: 28,
