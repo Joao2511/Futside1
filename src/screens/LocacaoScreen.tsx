@@ -62,10 +62,9 @@ export function LocacaoScreen() {
         {mockCourts.map((court) => (
           <TouchableOpacity
             key={court.id}
-            onPress={() =>
-              navigation.navigate('LocationDetail' as never, { courtId: court.id } as never)
-            }
+            onPress={() => navigation.navigate('LocationDetail', { courtId: court.id })}
           >
+
             <View style={styles.cardContainer}>
               <Image
                 source={{ uri: court.image }}
@@ -120,7 +119,6 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: theme.radius.medium,
     marginBottom: theme.spacing.large,
-    elevation: 5,
     backgroundColor: theme.colors.primary,
     overflow: 'hidden',
   },

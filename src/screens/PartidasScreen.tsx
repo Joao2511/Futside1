@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   logo: { height: 80 },
   section: { paddingHorizontal: theme.spacing.large, marginBottom: theme.spacing.large },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginBottom: theme.spacing.medium },
-  createMatchCard: { backgroundColor: theme.colors.primary, borderRadius: theme.radius.medium, height: 140, justifyContent: 'center', elevation: 3, overflow: 'hidden' },
+  createMatchCard: { backgroundColor: theme.colors.primary, borderRadius: theme.radius.medium, height: 140, justifyContent: 'center', overflow: 'hidden' },
   solidCardSubtitleContainer: { flexDirection: 'row', alignItems: 'center' },
   solidCardSubtitle: { color: theme.colors.white, marginLeft: theme.spacing.small, opacity: 0.8, fontSize: 12 },
   createMatchTitle: { color: theme.colors.white, fontSize: 24, fontWeight: 'bold', marginTop: theme.spacing.small },

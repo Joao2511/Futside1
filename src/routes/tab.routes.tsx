@@ -7,7 +7,7 @@ import { theme } from '../theme';
 
 import { HomeScreen } from '../screens/HomeScreen';
 import { MapaScreen } from '../screens/MapaScreen';
-import { LocacaoScreen } from '../screens/LocacaoScreen';
+import { LocacaoStackRoutes } from './locacao.stack.routes';
 import { ProfileStackRoutes } from './profile.stack.routes';
 import { PartidasStackRoutes } from './partidas.stack.routes';
 
@@ -45,7 +45,7 @@ export function TabRoutes() {
       <Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Início', tabBarIcon: ({ color, size }) => (<Icon name="home" color={color} size={size} />) }} />
       <Screen name="PartidasStack" component={PartidasStackRoutes} options={{ tabBarLabel: 'Partidas', tabBarIcon: ({ color, size }) => (<Icon name="shield" color={color} size={size} />) }} />
       <Screen name="Mapa" component={MapaScreen} options={{ tabBarLabel: '', tabBarButton: (props) => (<CustomMapButton {...props}><Icon name="map" color={theme.colors.primary} size={30} /></CustomMapButton>) }} />
-      <Screen name="Locação" component={LocacaoScreen} options={{ tabBarLabel: 'Locação', tabBarIcon: ({ color, size }) => (<Icon name="calendar" color={color} size={size} />) }} />
+      <Screen name="Locação" component={LocacaoStackRoutes} options={{ tabBarLabel: 'Locação', tabBarIcon: ({ color, size }) => (<Icon name="calendar" color={color} size={size} />) }} />
       <Screen name="Perfil" component={ProfileStackRoutes} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({ color, size }) => (<Icon name="user" color={color} size={size} />) }} />
     </Navigator>
   );
