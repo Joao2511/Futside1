@@ -1,16 +1,19 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 
-import { LocadorHomeScreen } from '../screens/LocadorHomeScreen.tsx';
-import { MinhasQuadrasScreen } from '../screens/MinhasQuadrasScreen.tsx';
-import { LocadorLocacaoScreen } from '../screens/LocadorLocacaoScreen.tsx';
+import { LocadorHomeScreen } from '../screens/LocadorHomeScreen';
+import { MinhasQuadrasScreen } from '../screens/MinhasQuadrasScreen';
+import { LocadorLocacaoScreen } from '../screens/LocadorLocacaoScreen';
 import { LocadorPerfilStackRoutes } from './locadorPerfil.stack.routes';
 
 const { Navigator, Screen } = createBottomTabNavigator();
 
 export function LocadorTabRoutes() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Navigator
       screenOptions={{
@@ -20,8 +23,8 @@ export function LocadorTabRoutes() {
         tabBarInactiveTintColor: theme.colors.white,
         tabBarStyle: {
           backgroundColor: theme.colors.primary,
-          height: 70,
-          paddingBottom: 10,
+          height: 70 + insets.bottom,
+          paddingBottom: insets.bottom || 10,
           paddingTop: 10,
           borderTopWidth: 0,
         },
@@ -63,7 +66,6 @@ export function LocadorTabRoutes() {
           tabBarIcon: ({ color, size }) => (<Icon name="user" color={color} size={size} />),
         }}
       />
-
     </Navigator>
   );
 }
