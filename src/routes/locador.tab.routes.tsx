@@ -6,7 +6,7 @@ import { theme } from '../theme';
 import { LocadorHomeScreen } from '../screens/LocadorHomeScreen.tsx';
 import { MinhasQuadrasScreen } from '../screens/MinhasQuadrasScreen.tsx';
 import { LocadorLocacaoScreen } from '../screens/LocadorLocacaoScreen.tsx';
-import { LocadorPerfilScreen } from '../screens/LocadorPerfilScreen.tsx';
+import { LocadorPerfilStackRoutes } from './locadorPerfil.stack.routes';
 
 const { Navigator, Screen } = createBottomTabNavigator();
 
@@ -57,12 +57,13 @@ export function LocadorTabRoutes() {
       />
       <Screen
         name="LocadorPerfil"
-        component={LocadorPerfilScreen}
+        component={LocadorPerfilStackRoutes}
         options={{
           tabBarLabel: 'PERFIL',
           tabBarIcon: ({ color, size }) => (<Icon name="user" color={color} size={size} />),
         }}
       />
+
     </Navigator>
   );
 }
