@@ -1,31 +1,20 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { useAuth } from '../hooks/useAuth';
+import { RoleSelectionScreen } from '../screens/RoleSelectionScreen';
 import { TabRoutes } from './tab.routes';
-// Remova a importação da CourtDetailScreen daqui
-// import { CourtDetailScreen } from '../screens/CourtDetailScreen';
-import { LocationDetailScreen } from '../screens/LocationDetailScreen';
+import { LocadorTabRoutes } from './locador.tab.routes';
 
-const { Navigator, Screen } = createNativeStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export function AppRoutes() {
-  return (
-    <Navigator screenOptions={{ headerShown: false }}>
-      <Screen
-          name="MainTabs"
-          component={TabRoutes}
-      />
+  const { role } = useAuth();
 
-      {/* Remova a tela CourtDetail daqui */}
-      {/* <Screen
-          name="CourtDetail"
-          component={CourtDetailScreen}
-          options={{ presentation: 'modal' }}
-      /> */}
-      <Screen
-          name="LocationDetail"
-          component={LocationDetailScreen}
-      />
-    </Navigator>
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!role && <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />}
+      {role === 'player' && <Stack.Screen name="MainTabs" component={TabRoutes} />}
+      {role === 'manager' && <Stack.Screen name="LocadorTabs" component={LocadorTabRoutes} />}
+    </Stack.Navigator>
   );
 }

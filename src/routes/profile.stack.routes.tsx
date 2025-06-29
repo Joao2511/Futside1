@@ -10,6 +10,7 @@ import { TermsAndPrivacyScreen } from '../screens/ermsAndPrivacyScreen';
 import { HelpAndSupportScreen } from '../screens/HelpAndSupportScreen';
 import { BecomeAManagerScreen } from '../screens/BecomeAManagerScreen';
 import { ReportProblemScreen } from '../screens/ReportProblemScreen';
+import { RoleSelectionScreen } from '../screens/RoleSelectionScreen';
 
 const { Navigator, Screen } = createNativeStackNavigator();
 
@@ -31,6 +32,7 @@ export function ProfileStackRoutes() {
       <Screen name="HelpAndSupport" component={HelpAndSupportScreen} />
       <Screen name="BecomeAManager" component={BecomeAManagerScreen} />
       <Screen name="ReportProblem" component={ReportProblemScreen} />
+      <Screen name="RoleSelection" component={RoleSelectionScreen} />
     </Navigator>
   );
 }
