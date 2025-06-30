@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     teamContainer: { alignItems: 'center', width: 100 },
     teamLogo: { width: 80, height: 80, borderRadius: 40, marginBottom: theme.spacing.small },
     teamName: { fontSize: 16, fontWeight: 'bold' },
-    scoreText: { fontSize: 48, fontWeight: 'bold', marginHorizontal: theme.spacing.medium },
+    scoreText: { fontSize: 48, fontWeight: 'bold', marginHorizontal: theme.spacing.medium, color: 'black' },
     liveStatusContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginVertical: theme.spacing.small },
     liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'red', marginRight: 5 },
     liveText: { color: 'red', fontWeight: 'bold' },

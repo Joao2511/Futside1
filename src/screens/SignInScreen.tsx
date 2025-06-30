@@ -50,7 +50,7 @@ export function SignInScreen({ navigation }: { navigation: any }) {
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
-          placeholder="exemplo@email.com"
+          placeholder="Seu Email"
           placeholderTextColor={'#8F8F8F'} 
           keyboardType="email-address"
           autoCapitalize="none"
@@ -59,7 +59,7 @@ export function SignInScreen({ navigation }: { navigation: any }) {
         />
         <TextInput
           style={styles.input}
-          placeholder="Senha"
+          placeholder="Sua Senha"
           placeholderTextColor={'#8F8F8F'} 
           secureTextEntry
           value={password}

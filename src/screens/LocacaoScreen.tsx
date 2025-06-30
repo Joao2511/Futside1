@@ -8,13 +8,15 @@ import {
   StatusBar,
   Image,
   ActivityIndicator,
-  FlatList // Usar FlatList para a lista horizontal
+  FlatList
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getMyFields, getFieldsFeed, FieldResponse } from '../services/api';
+
+// MyLocationCard não muda
 const MyLocationCard = ({ item, onPress }: { item: FieldResponse; onPress: () => void }) => (
     <TouchableOpacity onPress={onPress} style={styles.myLocationCard}>
         <Image 
@@ -26,96 +28,108 @@ const MyLocationCard = ({ item, onPress }: { item: FieldResponse; onPress: () =>
     </TouchableOpacity>
 );
 
-const LocationCard = ({ item, onPress }: { item: any; onPress: () => void }) => (
-    <TouchableOpacity onPress={onPress}>
-      <View style={styles.cardContainer}>
-        <Image
-          source={{ uri: item.image }} // Usando 'image' do mock
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-        <View style={styles.darkOverlay} />
-        <Image
-          source={require('../assets/card.png')}
-          style={styles.cardWatermark}
-          resizeMode="cover"
-        />
-        <View style={styles.cardContent}>
-          <View style={styles.tag}>
-            <Icon name="dribbble" size={14} color={theme.colors.text} />
-            <Text style={styles.tagText}>{item.title || 'Campo Society'}</Text>
-          </View>
-          <View>
-            <Text style={styles.courtName}>{item.name}</Text>
-            <Text style={styles.courtAddress}>{item.address}</Text>
-          </View>
-          <View style={styles.cardButton}>
-            <Text style={styles.cardButtonText}>VER MAIS</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-);
+// LocationCard agora é flexível (código do Passo 1)
+const LocationCard = ({ item, onPress }: { item: any; onPress: () => void }) => {
+    const imageUrl = 
+        (item.images && item.images[0]) || 
+        item.image || 
+        'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=687&auto=format&fit=crop';
 
+    return (
+        <TouchableOpacity onPress={onPress}>
+          <View style={styles.cardContainer}>
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            />
+            <View style={styles.darkOverlay} />
+            <Image
+              source={require('../assets/card.png')}
+              style={styles.cardWatermark}
+              resizeMode="cover"
+            />
+            <View style={styles.cardContent}>
+              <View style={styles.tag}>
+                <Icon name="dribbble" size={14} color={theme.colors.text} />
+                <Text style={styles.tagText}>{item.title || 'Campo Society'}</Text>
+              </View>
+              <View>
+                <Text style={styles.courtName}>{item.name}</Text>
+                <Text style={styles.courtAddress}>{item.address}</Text>
+              </View>
+              <View style={styles.cardButton}>
+                <Text style={styles.cardButtonText}>VER MAIS</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+    );
+};
+
+// Seus dados mockados continuam aqui
 const mockCourts = [
   {
-    id: '1',
+    id: 'mock-1', // Adicionei um prefixo para evitar conflito de chaves
     name: 'Real Society',
     address: 'S/n Trecho 3 21, Setor Hípico Sul, DF, 70610-000',
     image:
       'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=687&auto=format&fit=crop',
   },
   {
-    id: '2',
+    id: 'mock-2',
     name: 'Amarelinho Society',
     address: 'Colônia Agrícola Águas Claras, Chácara 36 nº 17',
     image:
       'https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=686&auto=format&fit=crop',
   },
   {
-    id: '3',
+    id: 'mock-3',
     name: 'Society do Toni',
     address: 'St. de Indústrias Q 5 - Sobradinho, Brasília - DF, 70297-400',
     image:
       'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=749&auto=format&fit=crop',
   },
 ];
+
 export function LocacaoScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const [myLocations, setMyLocations] = useState<FieldResponse[]>([]);
-  const [allLocations, setAllLocations] = useState<FieldResponse[]>([]);
+  const [allLocations, setAllLocations] = useState<any[]>([]); // Agora pode conter os dois tipos
   const [loading, setLoading] = useState(true);
-  const [loadingMyLocations, setLoadingMyLocations] = useState(true);
-  // useFocusEffect é chamado toda vez que a tela entra em foco
+
   useFocusEffect(
     useCallback(() => {
-      const fetchMyData = async () => {
-        setLoadingMyLocations(true);
+      const fetchData = async () => {
+        setLoading(true);
         try {
-          // --- MUDANÇA PRINCIPAL AQUI ---
-          // 1. Buscamos APENAS as locações do usuário.
-          const myFieldsData = await getMyFields();
+          // Busca os dados da API em paralelo
+          const [myFieldsData, allFieldsData] = await Promise.all([
+            getMyFields(),
+            getFieldsFeed(),
+          ]);
+
+          // Combina os resultados da API com os dados mockados
+          const combinedLocations = [...allFieldsData, ...mockCourts];
+
           setMyLocations(myFieldsData);
+          setAllLocations(combinedLocations);
+
         } catch (error) {
-          // Se a chamada falhar (com o erro 422, por exemplo),
-          // nós apenas registramos o erro e deixamos a lista vazia.
-          // Isso impede que a tela quebre.
-          console.error('Falha ao buscar "Minhas Locações":', error);
-          setMyLocations([]); // Garante que a lista fique vazia em caso de erro
+          console.error('Falha ao buscar locações da API:', error);
+          // Se a API falhar, mostramos pelo menos os dados mockados
+          setAllLocations(mockCourts);
         } finally {
-          setLoadingMyLocations(false);
+          setLoading(false);
         }
       };
 
-      // 2. Preenchemos a lista principal com os dados mockados.
-      setAllLocations(mockCourts);
-      
-      // 3. Chamamos a função para buscar os dados do usuário.
-      fetchMyData();
+      fetchData();
     }, [])
   );
+
   return (
     <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
@@ -124,68 +138,82 @@ export function LocacaoScreen() {
         <Text style={styles.headerTitle}>LOCAÇÃO</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* --- SESSÃO: MINHAS LOCAÇÕES (Continua funcionando com a API) --- */}
-        <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Minhas Locações</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddLocation')}>
-                <Icon name="plus" size={16} color={theme.colors.white} />
-                <Text style={styles.addButtonText}>Adicionar</Text>
-            </TouchableOpacity>
-        </View>
-
-        {loadingMyLocations ? (
-            <ActivityIndicator style={{ height: 120 }} size="large" color={theme.colors.primary} />
-        ) : myLocations.length > 0 ? (
-            <FlatList
-                data={myLocations}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                renderItem={({ item }) => (
-                    <MyLocationCard 
-                        item={item} 
-                        onPress={() => navigation.navigate('LocationDetail', { courtId: item.id })}
-                    />
-                )}
-                contentContainerStyle={{ paddingVertical: theme.spacing.medium }}
-            />
-        ) : (
-            <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Você ainda não cadastrou nenhuma locação.</Text>
+      {loading ? (
+        <View style={styles.loadingContainer}><ActivityIndicator size="large" color={theme.colors.primary} /></View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            {/* --- SESSÃO: MINHAS LOCAÇÕES --- */}
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Minhas Locações</Text>
+                <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddLocation')}>
+                    <Icon name="plus" size={16} color={theme.colors.white} />
+                    <Text style={styles.addButtonText}>Adicionar</Text>
+                </TouchableOpacity>
             </View>
-        )}
-        
-        {/* --- SESSÃO: LOCAÇÕES DISPONÍVEIS (Agora usa o mock) --- */}
-        <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Locações Disponíveis</Text>
-        </View>
-        
-        {/* Renderiza a lista a partir do estado allLocations, que contém o mock */}
-        {allLocations.map((court) => (
-            <LocationCard
-                key={court.id}
-                item={court}
-                // O mock não tem todos os dados para a tela de detalhe,
-                // então o clique pode não funcionar como esperado para estes itens.
-                onPress={() => navigation.navigate('LocationDetail', { courtId: court.id })}
-            />
-        ))}
-      </ScrollView>
+
+            {myLocations.length > 0 ? (
+                <FlatList
+                    data={myLocations}
+                    keyExtractor={(item) => item.id.toString()}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    renderItem={({ item }) => (
+                        <MyLocationCard 
+                            item={item} 
+                            onPress={() => navigation.navigate('LocationDetail', { courtId: item.id })}
+                        />
+                    )}
+                    contentContainerStyle={{ paddingVertical: theme.spacing.medium }}
+                />
+            ) : (
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Você ainda não cadastrou nenhuma locação.</Text>
+                </View>
+            )}
+            
+            {/* --- SESSÃO: LOCAÇÕES DISPONÍVEIS --- */}
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Locações Disponíveis</Text>
+            </View>
+            
+            {/* Renderiza a lista combinada */}
+            {allLocations.map((court) => (
+                <LocationCard
+                    key={court.id} // A chave agora é única por causa do prefixo 'mock-'
+                    item={court}
+                    onPress={() => {
+                        // A tela de detalhe pode não funcionar para os mocks
+                        // se ela depender de dados que só existem na API
+                        if (String(court.id).includes('mock-')) {
+                            alert('Detalhes para quadras mockadas não implementado.');
+                        } else {
+                            navigation.navigate('LocationDetail', { courtId: court.id })
+                        }
+                    }}
+                />
+            ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
-
-// (mesmos estilos de antes)
+// Seus estilos (adicionei um loadingContainer)
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  header: {
-    paddingVertical: theme.spacing.medium,
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-  },
-  headerTitle: {
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // ...resto dos estilos
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    header: {
+        paddingVertical: theme.spacing.medium,
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+    },
+    // ...todos os seus outros estilos permanecem aqui
+    headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: theme.colors.text,
