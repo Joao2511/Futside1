@@ -1,32 +1,46 @@
-// src/screens/BecomeAManagerScreen.tsx
-import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    StatusBar,
-    Image,
-} from 'react-native';
+import React, { useRef, useState, useCallback } from 'react';
+import { StyleSheet, View, Text, StatusBar, ActivityIndicator } from 'react-native';
+// PROVIDER_GOOGLE é removido, pois usaremos o padrão com uma camada customizada
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
-import { useNavigation } from '@react-navigation/native';
+import * as api from '../services/api'; // Importando nosso serviço de API
 
-const FeaturePoint = ({ icon, title, description }: { icon: string, title: string, description: string }) => (
-    <View style={styles.featurePoint}>
-        <Icon name={icon} size={28} color={theme.colors.primary} style={styles.featureIcon} />
-        <View style={styles.featureTextContainer}>
-            <Text style={styles.featureTitle}>{title}</Text>
-            <Text style={styles.featureDescription}>{description}</Text>
-        </View>
-    </View>
-);
+// Coordenadas iniciais para centralizar o mapa em Brasília.
+const initialRegion = {
+    latitude: -15.7801,
+    longitude: -47.9292,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+}; 
 
-export function BecomeAManagerScreen() {
+export function MapaScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+    const mapRef = useRef<MapView>(null);
+
+    // Estados para os dados reais e para o loading
+    const [courts, setCourts] = useState<api.FieldResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // useFocusEffect busca os dados toda vez que a tela é focada
+    useFocusEffect(
+        useCallback(() => {
+            const fetchCourts = async () => {
+                try {
+                    setLoading(true);
+                    // Usando a função do nosso serviço de API para buscar as quadras
+                    const fetchedCourts = await api.getFieldsFeed();
+                    setCourts(fetchedCourts);
+                } catch (error) {
+                    console.error("Erro ao buscar quadras para o mapa:", error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchCourts();
+        }, [])
+    );
 
     return (
         <View style={styles.container}>
@@ -35,49 +49,47 @@ export function BecomeAManagerScreen() {
                 backgroundColor="transparent"
                 barStyle="dark-content"
             />
-            <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
+            <MapView
+                ref={mapRef}
+                style={styles.map}
+                initialRegion={initialRegion} // Definimos a região inicial aqui
+            >
+                {/* INCLUSÃO DA CAMADA DE MAPA DO OPENSTREETMAP */}
+                <UrlTile
+                    urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maximumZ={19}
+                    flipY={false} // Padrão para a maioria dos provedores de tiles
+                />
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="chevron-left" size={30} color={theme.colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>SEJA UM LOCADOR</Text>
-                <View style={{ width: 30 }} />
+                {/* Renderiza os marcadores dinamicamente com base nos dados da API */}
+                {courts.map(court => (
+                    <Marker
+                        key={court.id}
+                        coordinate={{
+                            // Converte a latitude e longitude (que podem vir como string) para número
+                            latitude: parseFloat(court.latitude as any),
+                            longitude: parseFloat(court.longitude as any),
+                        }}
+                        title={court.name}
+                        description={court.address}
+                        pinColor={theme.colors.primary}
+                        onCalloutPress={() => navigation.navigate('LocacaoStack', { 
+                            screen: 'CourtDetail', 
+                            params: { fieldId: court.id } 
+                        })}
+                    />
+                ))}
+            </MapView>
+
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+                   <Text style={styles.headerTitle}>QUADRAS PRÓXIMAS</Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Image
-                    source={require('../assets/logo2.png')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                />
-                <Text style={styles.mainTitle}>Divulgue sua quadra e aumente seus agendamentos!</Text>
-                <Text style={styles.subtitle}>
-                    Ao se tornar um locador parceiro do Futside, você ganha acesso a uma comunidade de jogadores apaixonados e a ferramentas para gerir suas locações de forma simples e eficiente.
-                </Text>
-
-                <View style={styles.featuresSection}>
-                    <FeaturePoint 
-                        icon="calendar" 
-                        title="Gestão de Agenda" 
-                        description="Controle seus horários, preços e disponibilidade em tempo real." 
-                    />
-                    <FeaturePoint 
-                        icon="users" 
-                        title="Alcance Novos Clientes" 
-                        description="Apareça para milhares de jogadores que procuram um lugar para jogar." 
-                    />
-                    <FeaturePoint 
-                        icon="bar-chart-2" 
-                        title="Aumente sua Renda" 
-                        description="Otimize a ocupação da sua quadra e veja o seu faturamento crescer." 
-                    />
+            {loading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
-
-                <TouchableOpacity style={styles.registerButton}>
-                    <Text style={styles.registerButtonText}>QUERO SER UM LOCADOR</Text>
-                </TouchableOpacity>
-            </ScrollView>
+            )}
         </View>
     );
 }
@@ -85,84 +97,33 @@ export function BecomeAManagerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+    },
+    map: {
+        ...StyleSheet.absoluteFillObject,
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)', // Fundo semitransparente para melhor leitura
+        paddingVertical: 12,
         alignItems: 'center',
-        paddingVertical: theme.spacing.medium,
-        paddingHorizontal: theme.spacing.medium,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.surface,
-    },
-    backButton: {
-        padding: 5,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: theme.colors.text,
-    },
-    scrollContainer: {
-        padding: theme.spacing.large,
-    },
-    logo: {
-        height: 80,
-        width: '80%',
-        alignSelf: 'center',
-        marginBottom: theme.spacing.large,
-    },
-    mainTitle: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: theme.colors.text,
-        marginBottom: theme.spacing.medium,
-    },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
-        color: theme.colors.placeholder,
-        lineHeight: 24,
-        marginBottom: theme.spacing.large,
-    },
-    featuresSection: {
-        marginVertical: theme.spacing.large,
-    },
-    featurePoint: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: theme.spacing.large,
-    },
-    featureIcon: {
-        marginRight: theme.spacing.medium,
-    },
-    featureTextContainer: {
-        flex: 1,
-    },
-    featureTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: theme.colors.text,
     },
-    featureDescription: {
-        fontSize: 14,
-        color: theme.colors.placeholder,
-        marginTop: 4,
-        lineHeight: 20,
-    },
-    registerButton: {
-        backgroundColor: theme.colors.primary,
-        padding: theme.spacing.medium,
-        borderRadius: theme.radius.medium,
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginTop: theme.spacing.medium,
-        marginBottom: 16
-    },
-    registerButtonText: {
-        color: theme.colors.white,
-        fontWeight: 'bold',
-        fontSize: 16,
     },
 });

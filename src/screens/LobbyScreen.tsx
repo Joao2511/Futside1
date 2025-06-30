@@ -1,5 +1,4 @@
-// src/screens/LobbyScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -8,40 +7,28 @@ import {
     TouchableOpacity,
     StatusBar,
     Image,
-    TextInput,
-    KeyboardAvoidingView,
-    Platform,
-    Alert // 1. Importar o Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
-import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
-import { AddPlayerModal } from '../components/AddPlayerModal';
-import Toast from 'react-native-toast-message'; // 2. Importar o Toast
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useAuth } from '../hooks/useAuth';
+import * as api from '../services/api';
+import mqtt from 'mqtt';
+import { MQTT_BROKER_URL, MQTT_OPTIONS } from '../services/mqttClient';
+// Endereço do broker MQTT. Para emulador Android, use o IP 10.0.2.2 para se referir ao localhost da máquina.
+// Se o broker estiver na nuvem, use o endereço real (ex: 'ws://broker.hivemq.com:8000/mqtt')
 
-// Tipagem para um jogador
-interface Player {
-    id: string;
+interface LobbyPlayer {
+    id: number;
     name: string;
     avatar: string;
-    role: string;
-    isLeader: boolean;
 }
 
-// Mock de dados para os times
-const initialMockTeamA = {
-    name: 'TIME A',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/ff/Chelsea_FC.svg/1200px-Chelsea_FC.svg.png',
-};
-const initialMockTeamB = {
-    name: 'TIME B',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2d/Leicester_City_FC.svg/1200px-Leicester_City_FC_logo.svg.png',
-};
-
-// Componente para exibir o avatar do jogador
-const PlayerAvatar = ({ player }: { player: Player | null }) => (
-    <View style={styles.playerSlotContainer}>
+const PlayerAvatar = ({ player, onAddPress }: { player: LobbyPlayer | null, onAddPress: () => void }) => (
+    <TouchableOpacity style={styles.playerSlotContainer} onPress={onAddPress} disabled={!!player}>
         <View style={[styles.avatarCircle, !player && styles.avatarEmpty]}>
             {player ? (
                 <Image source={{ uri: player.avatar }} style={styles.avatar} />
@@ -49,149 +36,226 @@ const PlayerAvatar = ({ player }: { player: Player | null }) => (
                 <Icon name="plus" size={24} color={theme.colors.placeholder} />
             )}
         </View>
-        <Text style={styles.playerNameSlot}>{player?.name || 'Vazio'}</Text>
-        {player?.role && (
-            <Text style={styles.playerRole}>
-                <Icon name="hexagon" size={10} color={theme.colors.text} />{' '}
-                {player.role}
-            </Text>
-        )}
-    </View>
+        <Text style={styles.playerNameSlot} numberOfLines={1}>{player?.name || 'Vazio'}</Text>
+    </TouchableOpacity>
 );
 
 export function LobbyScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
-    const { courtName, selectedPlayers, matchTime, organizer } = route.params as { courtName: string, selectedPlayers: string, matchTime: string, organizer: string };
+    const { user: currentUser } = useAuth();
+    const { matchId } = route.params as { matchId: number };
 
-    const totalPlayersPerTeam = parseInt(selectedPlayers.split('V')[0]);
-
-    const [scoreA, setScoreA] = useState(0);
-    const [scoreB, setScoreB] = useState(0);
-    const [isMatchStarted, setIsMatchStarted] = useState(false);
-    const [remainingTime, setRemainingTime] = useState(0);
-    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-    const [teamAPlayers, setTeamAPlayers] = useState<Player[]>([]);
-    const [teamBPlayers, setTeamBPlayers] = useState<Player[]>([]);
-    const [isAddPlayerModalVisible, setIsAddPlayerModalVisible] = useState(false);
-    const [teamToAddPlayer, setTeamToAddPlayer] = useState<'A' | 'B'>('A');
-    const [message, setMessage] = useState('');
-
-    const parseMatchTime = (timeString: string): number => {
-        if (!timeString) return 0;
-        const parts = timeString.split(':');
-        if (parts.length === 2) {
-            const hours = parseInt(parts[0], 10);
-            const minutes = parseInt(parts[1], 10);
-            if (!isNaN(hours) && !isNaN(minutes)) {
-                return (hours * 3600) + (minutes * 60);
-            }
-        }
-        return 0;
-    };
+    const [matchDetails, setMatchDetails] = useState<api.MatchDetailResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [players, setPlayers] = useState<LobbyPlayer[]>([]);
+    const [isJoining, setIsJoining] = useState(false);
     
-    const formatDuration = (totalSeconds: number): string => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    };
+    const clientRef = useRef<mqtt.MqttClient | null>(null);
 
-    useEffect(() => {
-        if (isMatchStarted) {
-            const initialTimeInSeconds = parseMatchTime(matchTime || '00:00');
-            setRemainingTime(initialTimeInSeconds > 0 ? initialTimeInSeconds : 60 * 45);
+    const totalPlayersPerTeam = matchDetails ? Math.floor(matchDetails.max_players / 2) : 5;
 
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    const transformPlayerData = useCallback((apiPlayers: any[]): LobbyPlayer[] => {
+        return apiPlayers.map(player => ({
+            id: player.id,
+            name: player.name,
+            avatar: `https://avatar.iran.liara.run/public/boy?username=${player.id}`
+        }));
+    }, []);
 
-            timerIntervalRef.current = setInterval(() => {
-                setRemainingTime(prevTime => {
-                    if (prevTime <= 1) {
-                        clearInterval(timerIntervalRef.current!);
-                        return 0;
-                    }
-                    return prevTime - 1;
-                });
-            }, 1000);
-        } else {
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-        }
+    const dividePlayersIntoTeams = useCallback((allPlayers: LobbyPlayer[]) => {
+        const teamA: LobbyPlayer[] = [];
+        const teamB: LobbyPlayer[] = [];
+        allPlayers.forEach((player, index) => {
+            if (index % 2 === 0) {
+                teamA.push(player);
+            } else {
+                teamB.push(player);
+            }
+        });
+        return { teamA, teamB };
+    }, []);
 
-        return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current) };
-    }, [isMatchStarted, matchTime]);
-
-    const createPlayerSlots = (players: Player[], count: number) => {
-        const slots: (Player | null)[] = Array(count).fill(null);
-        players.forEach((player, index) => {
-            if (index < count) slots[index] = player;
+    const createPlayerSlots = useCallback((teamPlayers: LobbyPlayer[], totalSlots: number): (LobbyPlayer | null)[] => {
+        const slots: (LobbyPlayer | null)[] = Array(totalSlots).fill(null);
+        teamPlayers.forEach((player, index) => {
+            if (index < totalSlots) {
+                slots[index] = player;
+            }
         });
         return slots;
-    };
+    }, []);
+    
+    // --- LÓGICA PRINCIPAL DE DADOS (FETCH INICIAL E MQTT) ---
+    useEffect(() => {
+        let isMounted = true;
 
-    const teamASlots = createPlayerSlots(teamAPlayers, totalPlayersPerTeam);
-    const teamBSlots = createPlayerSlots(teamBPlayers, totalPlayersPerTeam);
-
-    const handleStartMatch = () => { setIsMatchStarted(true); };
-    const handleScoreGoal = (team: 'A' | 'B') => { if (isMatchStarted) team === 'A' ? setScoreA(p => p + 1) : setScoreB(p => p + 1); };
-    const handleRemoveGoal = (team: 'A' | 'B') => { if (isMatchStarted) team === 'A' ? setScoreA(p => Math.max(0, p - 1)) : setScoreB(p => Math.max(0, p - 1)); };
-
-    // 3. Função de Encerrar Partida com o Alert, Toast e Navegação
-    const handleEndMatch = () => {
-        Alert.alert(
-            "Encerrar Partida",
-            "Você realmente deseja terminar a partida?",
-            [
-                {
-                    text: "Não",
-                    style: "cancel"
-                },
-                { 
-                    text: "Sim", 
-                    onPress: () => {
-                        setIsMatchStarted(false);
-                        if (timerIntervalRef.current) {
-                            clearInterval(timerIntervalRef.current);
-                        }
-
-                        Toast.show({
-                            type: 'success',
-                            text1: 'Partida Encerrada!',
-                            text2: 'O resultado foi salvo no seu histórico.'
-                        });
-                        
-                        // Redireciona para o resumo da partida, resetando a pilha de navegação
-                        // para que o utilizador não consiga voltar para o lobby finalizado.
-                        navigation.dispatch(
-                            CommonActions.reset({
-                                index: 1,
-                                routes: [
-                                    { name: 'PartidasList' }, // Volta para a lista principal de partidas
-                                    { 
-                                        name: 'MatchSummary',
-                                        params: { 
-                                            scoreA, 
-                                            scoreB,
-                                            teamA: initialMockTeamA,
-                                            teamB: initialMockTeamB,
-                                        },
-                                    },
-                                ],
-                            })
-                        );
-                    }
+        const fetchInitialDetails = async () => {
+            try {
+                console.log('Buscando detalhes iniciais da partida:', matchId);
+                const data = await api.getMatchDetails(matchId);
+                if (isMounted) {
+                    setMatchDetails(data);
+                    const transformedPlayers = transformPlayerData(data.players || []);
+                    setPlayers(transformedPlayers);
                 }
-            ]
-        );
+            } catch (error) {
+                console.error('Erro ao buscar detalhes da partida:', error);
+                if (isMounted) {
+                    Alert.alert("Erro", "Não foi possível carregar os detalhes do lobby.");
+                    navigation.goBack();
+                }
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        // 1. Busca os dados iniciais
+        fetchInitialDetails();
+
+        // 2. Configura o cliente MQTT para atualizações em tempo real
+        console.log('Configurando cliente MQTT para match:', matchId);
+        
+        const lobbyOptions = {
+            ...MQTT_OPTIONS, // <-- Adiciona as opções de autenticação
+            clientId: `lobby-client-${matchId}-${Math.random().toString(16).slice(2)}`,
+        };
+        
+        // --- USA AS CONSTANTES E OPÇÕES IMPORTADAS ---
+        const client = mqtt.connect(MQTT_BROKER_URL, lobbyOptions);
+        clientRef.current = client;
+
+        client.on('connect', () => {
+            console.log('✅ MQTT Cliente conectado no Lobby');
+            const topic = `futside/match/${matchId}/updates`;
+            console.log('📡 Subscrevendo ao tópico:', topic);
+            client.subscribe(topic, { qos: 1 }, (err) => {
+                if (err) console.error('❌ Erro na subscrição MQTT:', err);
+            });
+        });
+
+        client.on('message', (topic, message) => {
+            if (!isMounted) return;
+            
+            try {
+                console.log('📨 MQTT Mensagem recebida:', message.toString());
+                const parsedMessage = JSON.parse(message.toString());
+                if (parsedMessage.event === 'match_started') {
+                    console.log('Partida iniciada! Navegando para a tela de detalhes...');
+                    // Usamos 'replace' para que o usuário não possa voltar para o lobby
+                    navigation.replace('MatchDetail', { 
+                        matchId: parsedMessage.data.match_id 
+                    });
+                    return; // Evita processar outros eventos
+                }            
+                if (parsedMessage.event === 'player_joined') {
+                    const newPlayerData = parsedMessage.data;
+                    console.log('🎮 Novo jogador entrando via MQTT:', newPlayerData);
+                    
+                    const newPlayer: LobbyPlayer = {
+                        id: newPlayerData.user_id,
+                        name: newPlayerData.user_name,
+                        avatar: `https://avatar.iran.liara.run/public/boy?username=${newPlayerData.user_id}`
+                    };
+
+                    // Atualiza a lista de jogadores no estado
+                    setPlayers(currentPlayers => {
+                        const playerExists = currentPlayers.some(p => p.id === newPlayer.id);
+                        if (playerExists) {
+                            return currentPlayers; // Se já existe, não faz nada
+                        }
+                        // Adiciona o novo jogador e retorna um novo array para o React re-renderizar
+                        return [...currentPlayers, newPlayer];
+                    });
+
+                    // Atualiza os detalhes da partida (como a contagem de jogadores)
+                    setMatchDetails(currentDetails => 
+                        currentDetails ? { ...currentDetails, player_count: newPlayerData.player_count } : null
+                    );
+                }
+            } catch (error) {
+                console.error('❌ Erro ao processar mensagem MQTT:', error);
+            }
+        });
+        
+        client.on('error', (err) => console.error('❌ MQTT Error:', err));
+        client.on('close', () => console.log('🔌 MQTT Conexão fechada'));
+
+        // Função de limpeza ao desmontar o componente
+        return () => {
+            isMounted = false;
+            console.log('🧹 Limpando e desconectando cliente MQTT');
+            if (clientRef.current) {
+                clientRef.current.end(true);
+            }
+        };
+    }, [matchId, navigation, transformPlayerData]); // Dependências do useEffect
+
+        const handleStartMatch = async () => {
+            if (!matchDetails) return;
+            Alert.alert(
+                "Iniciar Partida",
+                "Tem certeza que deseja iniciar a partida? Todos os jogadores serão redirecionados.",
+                [
+                    { text: "Cancelar", style: "cancel" },
+                    { 
+                        text: "Iniciar", 
+                        onPress: async () => {
+                            try {
+                                await api.startMatch(matchId);
+                                // Não precisa fazer mais nada aqui, o MQTT cuidará do redirecionamento
+                            } catch (error) {
+                                console.error("Erro ao iniciar a partida:", error);
+                                Alert.alert("Erro", "Não foi possível iniciar a partida.");
+                            }
+                        },
+                        style: "destructive"
+                    }
+                ]
+            );
+        };
+    // --- FUNÇÃO DE ENTRAR NA PARTIDA (SEM ATUALIZAÇÃO OTIMISTA) ---
+    const handleJoinTeam = async () => {
+        if (!matchDetails || !currentUser || isJoining) return;
+        
+        if (players.some(p => p.id === currentUser.id)) {
+            Alert.alert("Aviso", "Você já está nesta partida.");
+            return;
+        }
+        
+        if (players.length >= matchDetails.max_players) {
+            Alert.alert("Aviso", "Esta partida já está cheia.");
+            return;
+        }
+        
+        try {
+            setIsJoining(true);
+            console.log('🎯 Tentando entrar na partida via API:', matchDetails.id);
+            await api.joinMatch(matchDetails.id);
+            console.log('✅ Sucesso ao chamar API. Aguardando MQTT para atualização da UI.');
+            // A UI será atualizada pela mensagem MQTT que o backend enviará.
+            
+        } catch (error) {
+            console.error('❌ Erro ao entrar na partida:', error);
+            const errorMessage = error.response?.data?.detail || "Não foi possível entrar na partida.";
+            Alert.alert("Erro", errorMessage);
+        } finally {
+            setIsJoining(false);
+        }
     };
 
-    const handleAddPlayer = (name: string, role: string, teamId: 'A' | 'B') => {
-        const newPlayer: Player = { id: `player_${Date.now()}`, name, avatar: `https://avatar.iran.liara.run/public/${Math.random() > 0.5 ? 'boy' : 'girl'}?username=${name.replace(/\s/g, '')}`, role, isLeader: false };
-        if (teamId === 'A' && teamAPlayers.length < totalPlayersPerTeam) setTeamAPlayers(p => [...p, newPlayer]);
-        else if (teamId === 'B' && teamBPlayers.length < totalPlayersPerTeam) setTeamBPlayers(p => [...p, newPlayer]);
-        else Alert.alert("Time Cheio", `O time já está completo.`);
-    };
+    const { teamA, teamB } = dividePlayersIntoTeams(players);
+    const teamASlots = createPlayerSlots(teamA, totalPlayersPerTeam);
+    const teamBSlots = createPlayerSlots(teamB, totalPlayersPerTeam);
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -202,121 +266,206 @@ export function LobbyScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Icon name="chevron-left" size={30} color={theme.colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{courtName}</Text>
-                <TouchableOpacity style={styles.shareButton}><Icon name="share-2" size={24} color={theme.colors.text} /></TouchableOpacity>
+                <Text style={styles.headerTitle} numberOfLines={1}>
+                    {matchDetails?.title || 'Lobby'}
+                </Text>
+                <TouchableOpacity style={styles.shareButton}>
+                    <Icon name="share-2" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
             </View>
 
-            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                    {/* Seção do placar e localização */}
-                    <View style={styles.scoreSection}>
-                        <View style={styles.teamScoreContainer}>
-                            <Image source={{ uri: initialMockTeamA.logo }} style={styles.teamLogo} />
-                            <Text style={styles.teamNameScore}>{initialMockTeamA.name}</Text>
-                            {isMatchStarted && (
-                                <View style={styles.scoreButtonsContainer}>
-                                    <TouchableOpacity onPress={() => handleRemoveGoal('A')} style={styles.removeGoalButton}><Icon name="minus" size={16} color={theme.colors.text} /></TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleScoreGoal('A')} style={styles.addGoalButton}><Icon name="plus" size={16} color={theme.colors.text} /></TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
-                        <View style={styles.centralScoreContainer}>
-                            <Text style={styles.scoreText}>{scoreA} - {scoreB}</Text>
-                            <View style={styles.timeTextContainer}>
-                                <View style={styles.liveDot} />
-                                <Text style={styles.timeTextContent}>{isMatchStarted && remainingTime > 0 ? formatDuration(remainingTime) : 'Aguardando'}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.teamScoreContainer}>
-                            <Image source={{ uri: initialMockTeamB.logo }} style={styles.teamLogo} />
-                            <Text style={styles.teamNameScore}>{initialMockTeamB.name}</Text>
-                            {isMatchStarted && (
-                                <View style={styles.scoreButtonsContainer}>
-                                    <TouchableOpacity onPress={() => handleRemoveGoal('B')} style={styles.removeGoalButton}><Icon name="minus" size={16} color={theme.colors.text} /></TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleScoreGoal('B')} style={styles.addGoalButton}><Icon name="plus" size={16} color={theme.colors.text} /></TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
-                    </View>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.playersInfoContainer}>
+                    <Text style={styles.playersInfoText}>
+                        {players.length} / {matchDetails?.max_players || 0} jogadores
+                    </Text>
+                </View>
 
-                    {/* Estrutura para exibir os dois times lado a lado */}
-                    <View style={styles.teamsDisplayCard}>
-                        <View style={styles.teamColumn}>
-                            <Text style={styles.teamColumnTitle}>{initialMockTeamA.name}</Text>
-                            {teamASlots.map((player, index) => (
-                                <TouchableOpacity key={index} onPress={() => { if (!player) { setTeamToAddPlayer('A'); setIsAddPlayerModalVisible(true); }}}>
-                                    <PlayerAvatar player={player} />
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                        <View style={styles.teamColumn}>
-                            <Text style={styles.teamColumnTitle}>{initialMockTeamB.name}</Text>
-                            {teamBSlots.map((player, index) => (
-                                <TouchableOpacity key={index} onPress={() => { if (!player) { setTeamToAddPlayer('B'); setIsAddPlayerModalVisible(true); }}}>
-                                    <PlayerAvatar player={player} />
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                <View style={styles.teamsDisplayCard}>
+                    <View style={styles.teamColumn}>
+                        <Text style={styles.teamColumnTitle}>TIME A</Text>
+                        {teamASlots.map((player, index) => (
+                            <PlayerAvatar 
+                                key={`A-${index}`} 
+                                player={player} 
+                                onAddPress={handleJoinTeam} 
+                            />
+                        ))}
                     </View>
+                    
+                    <View style={styles.teamColumn}>
+                        <Text style={styles.teamColumnTitle}>TIME B</Text>
+                        {teamBSlots.map((player, index) => (
+                            <PlayerAvatar 
+                                key={`B-${index}`} 
+                                player={player} 
+                                onAddPress={handleJoinTeam} 
+                            />
+                        ))}
+                    </View>
+                </View>
 
-                    <View style={styles.matchActionsContainer}>
-                        {!isMatchStarted ? (
-                            <TouchableOpacity style={styles.startMatchButton} onPress={handleStartMatch}>
-                                <Text style={styles.startMatchButtonText}>INICIAR PARTIDA</Text>
-                            </TouchableOpacity>
+                <View style={styles.matchActionsContainer}>
+                    <TouchableOpacity 
+                        style={[
+                            styles.joinMatchButton, 
+                            (isJoining || players.some(p => p.id === currentUser?.id)) && styles.joinMatchButtonDisabled
+                        ]}
+                        onPress={handleJoinTeam}
+                        disabled={isJoining || players.some(p => p.id === currentUser?.id)}
+                    >
+                        {isJoining ? (
+                            <ActivityIndicator size="small" color={theme.colors.white} />
                         ) : (
-                            <TouchableOpacity style={[styles.startMatchButton, styles.endMatchButton]} onPress={handleEndMatch}>
-                                <Text style={[styles.startMatchButtonText, styles.endMatchButtonText]}>ENCERRAR PARTIDA</Text>
-                            </TouchableOpacity>
+                            <Text style={styles.joinMatchButtonText}>
+                                {players.some(p => p.id === currentUser?.id) ? 'VOCÊ ESTÁ NA PARTIDA' : 'ENTRAR NA PARTIDA'}
+                            </Text>
                         )}
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-
-            <AddPlayerModal
-                isVisible={isAddPlayerModalVisible}
-                onClose={() => setIsAddPlayerModalVisible(false)}
-                onAddPlayer={handleAddPlayer}
-                teamId={teamToAddPlayer}
-            />
+                    </TouchableOpacity>
+                    
+                    {currentUser?.id === matchDetails?.creator_id && (
+                        <TouchableOpacity style={styles.startMatchButton} onPress={handleStartMatch}>
+                            <Text style={styles.startMatchButtonText}>INICIAR PARTIDA</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </ScrollView>
         </View>
     );
 }
 
-// ... (seus estilos existentes)
+// Seus estilos (styles) permanecem os mesmos
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: theme.spacing.medium, paddingHorizontal: theme.spacing.medium, borderBottomWidth: 1, borderBottomColor: theme.colors.surface },
-    backButton: { padding: 5 },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, flex: 1, textAlign: 'center' },
-    shareButton: { padding: 5 },
-    scrollContent: { paddingBottom: theme.spacing.large },
-    scoreSection: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: theme.spacing.large, backgroundColor: theme.colors.primary, paddingHorizontal: theme.spacing.medium, marginBottom: theme.spacing.large },
-    teamScoreContainer: { alignItems: 'center', flex: 1, position: 'relative' },
-    teamLogo: { width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.surface, marginBottom: theme.spacing.small },
-    teamNameScore: { color: theme.colors.white, fontWeight: 'bold', fontSize: 14, textAlign: 'center' },
-    scoreButtonsContainer: { flexDirection: 'row', marginTop: theme.spacing.small },
-    addGoalButton: { backgroundColor: 'rgba(255,255,255,0.3)', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
-    removeGoalButton: { backgroundColor: 'rgba(255,255,255,0.3)', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
-    centralScoreContainer: { alignItems: 'center', marginHorizontal: theme.spacing.small },
-    scoreText: { fontSize: 48, fontWeight: 'bold', color: theme.colors.white },
-    timeTextContainer: { flexDirection: 'row', alignItems: 'center' },
-    timeTextContent: { fontSize: 16, color: theme.colors.white, opacity: 0.8 },
-    liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF6347', marginRight: 5 },
-    locationButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.yellow, borderRadius: theme.radius.medium, paddingVertical: theme.spacing.small - 2, paddingHorizontal: theme.spacing.medium, marginTop: theme.spacing.medium },
-    locationButtonText: { color: theme.colors.primary, fontSize: 12, fontWeight: 'bold', marginLeft: theme.spacing.small },
-    teamsDisplayCard: { flexDirection: 'row', justifyContent: 'space-around', marginHorizontal: theme.spacing.large, backgroundColor: theme.colors.surface, borderRadius: theme.radius.medium, padding: theme.spacing.large, elevation: 3, marginBottom: theme.spacing.large },
-    teamColumn: { flex: 1, alignItems: 'center' },
-    teamColumnTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text, marginBottom: theme.spacing.large },
-    playerSlotContainer: { alignItems: 'center', marginBottom: theme.spacing.medium, width: '100%' },
-    avatarCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-    avatarEmpty: { borderStyle: 'dashed', borderWidth: 1, borderColor: theme.colors.placeholder },
-    avatar: { width: '100%', height: '100%' },
-    playerNameSlot: { fontSize: 14, color: theme.colors.text, marginTop: theme.spacing.small, textAlign: 'center' },
-    playerRole: { fontSize: 10, color: theme.colors.placeholder },
-    matchActionsContainer: { marginHorizontal: theme.spacing.large, marginTop: theme.spacing.large, alignItems: 'center' },
-    startMatchButton: { backgroundColor: theme.colors.yellow, borderRadius: theme.radius.medium, paddingVertical: theme.spacing.medium, alignItems: 'center', width: '100%', elevation: 3 },
-    startMatchButtonText: { color: theme.colors.primary, fontSize: 18, fontWeight: 'bold' },
-    endMatchButton: { backgroundColor: theme.colors.danger },
-    endMatchButtonText: { color: theme.colors.white, fontSize: 18, fontWeight: 'bold' },
+    loadingContainer: { 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+    },
+    container: { 
+        flex: 1, 
+        backgroundColor: theme.colors.background 
+    },
+    header: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingVertical: theme.spacing.medium, 
+        paddingHorizontal: theme.spacing.medium, 
+        borderBottomWidth: 1, 
+        borderBottomColor: theme.colors.surface 
+    },
+    backButton: { 
+        padding: 5 
+    },
+    headerTitle: { 
+        fontSize: 20, 
+        fontWeight: 'bold', 
+        color: theme.colors.text, 
+        flex: 1, 
+        textAlign: 'center', 
+        marginHorizontal: 10 
+    },
+    shareButton: { 
+        padding: 5 
+    },
+    scrollContent: { 
+        paddingBottom: theme.spacing.large 
+    },
+    playersInfoContainer: {
+        alignItems: 'center',
+        marginVertical: theme.spacing.medium
+    },
+    playersInfoText: {
+        fontSize: 16,
+        color: theme.colors.text,
+        fontWeight: '600'
+    },
+    teamsDisplayCard: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-around', 
+        marginHorizontal: theme.spacing.large, 
+        backgroundColor: theme.colors.surface, 
+        borderRadius: theme.radius.medium, 
+        padding: theme.spacing.large, 
+        elevation: 3, 
+        marginTop: theme.spacing.medium, 
+        marginBottom: theme.spacing.large 
+    },
+    teamColumn: { 
+        flex: 1, 
+        alignItems: 'center' 
+    },
+    teamColumnTitle: { 
+        fontSize: 18, 
+        fontWeight: 'bold', 
+        color: theme.colors.text, 
+        marginBottom: theme.spacing.large 
+    },
+    playerSlotContainer: { 
+        alignItems: 'center', 
+        marginBottom: theme.spacing.medium, 
+        width: '100%' 
+    },
+    avatarCircle: { 
+        width: 60, 
+        height: 60, 
+        borderRadius: 30, 
+        backgroundColor: theme.colors.background, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        overflow: 'hidden' 
+    },
+    avatarEmpty: { 
+        borderStyle: 'dashed', 
+        borderWidth: 1, 
+        borderColor: theme.colors.placeholder 
+    },
+    avatar: { 
+        width: '100%', 
+        height: '100%' 
+    },
+    playerNameSlot: { 
+        fontSize: 14, 
+        color: theme.colors.text, 
+        marginTop: theme.spacing.small, 
+        textAlign: 'center' 
+    },
+    matchActionsContainer: { 
+        marginHorizontal: theme.spacing.large, 
+        marginTop: theme.spacing.large, 
+        alignItems: 'center',
+        gap: theme.spacing.medium
+    },
+    joinMatchButton: {
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.medium,
+        paddingVertical: theme.spacing.medium,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        elevation: 3,
+        minHeight: 50,
+    },
+    joinMatchButtonDisabled: {
+        backgroundColor: theme.colors.placeholder,
+        opacity: 0.8
+    },
+    joinMatchButtonText: {
+        color: theme.colors.white || '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    startMatchButton: { 
+        backgroundColor: theme.colors.yellow, 
+        borderRadius: theme.radius.medium, 
+        paddingVertical: theme.spacing.medium, 
+        alignItems: 'center', 
+        width: '100%', 
+        elevation: 3 
+    },
+    startMatchButtonText: { 
+        color: theme.colors.primary, 
+        fontSize: 18, 
+        fontWeight: 'bold' 
+    },
 });

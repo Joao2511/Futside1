@@ -38,6 +38,7 @@ export function LocadorChangePasswordScreen() {
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
                         placeholder="Digite sua senha atual"
+                        placeholderTextColor={'#8F8F8F'} 
                     />
                     <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeIcon}>
                         <Icon name={showCurrent ? 'eye' : 'eye-off'} size={22} color={theme.colors.placeholder} />

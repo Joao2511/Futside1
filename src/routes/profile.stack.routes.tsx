@@ -8,7 +8,7 @@ import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
 import { TermsAndPrivacyScreen } from '../screens/ermsAndPrivacyScreen';
 import { HelpAndSupportScreen } from '../screens/HelpAndSupportScreen';
-import { BecomeAManagerScreen } from '../screens/BecomeAManagerScreen';
+import { MapaScreen } from '../screens/MapaScreen';
 import { ReportProblemScreen } from '../screens/ReportProblemScreen';
 import { RoleSelectionScreen } from '../screens/RoleSelectionScreen';
 
@@ -30,7 +30,7 @@ export function ProfileStackRoutes() {
       <Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Screen name="TermsAndPrivacy" component={TermsAndPrivacyScreen} />
       <Screen name="HelpAndSupport" component={HelpAndSupportScreen} />
-      <Screen name="BecomeAManager" component={BecomeAManagerScreen} />
+      <Screen name="BecomeAManager" component={MapaScreen} />
       <Screen name="ReportProblem" component={ReportProblemScreen} />
       <Screen name="RoleSelection" component={RoleSelectionScreen} />
     </Navigator>

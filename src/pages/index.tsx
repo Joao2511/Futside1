@@ -25,14 +25,14 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="exemplo@email.com"
-          placeholderTextColor="#999"
+          placeholderTextColor={'#8F8F8F'} 
           keyboardType="email-address"
           autoCapitalize="none"
         />
         <TextInput
           style={styles.input}
           placeholder="Senha"
-          placeholderTextColor="#999"
+          placeholderTextColor={'#8F8F8F'} 
           secureTextEntry
         />
 

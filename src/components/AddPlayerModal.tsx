@@ -53,14 +53,14 @@ export function AddPlayerModal({ isVisible, onClose, onAddPlayer, teamId }: AddP
           <TextInput
             style={styles.input}
             placeholder="Nome do Jogador"
-            placeholderTextColor={theme.colors.placeholder}
+            placeholderTextColor={'#8F8F8F'} 
             value={name}
             onChangeText={setName}
           />
           <TextInput
             style={styles.input}
             placeholder="Função (ex: Goleiro, Atacante)"
-            placeholderTextColor={theme.colors.placeholder}
+            placeholderTextColor={'#8F8F8F'} 
             value={role}
             onChangeText={setRole}
           />

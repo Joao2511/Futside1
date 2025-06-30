@@ -59,7 +59,7 @@ export function LocadorReportProblemScreen() {
                     placeholder="Ex: Erro ao entrar no lobby"
                     value={subject}
                     onChangeText={setSubject}
-                    placeholderTextColor={theme.colors.placeholder}
+                    placeholderTextColor={'#8F8F8F'} 
                 />
 
                 <Text style={styles.label}>Descrição do Problema</Text>
@@ -68,7 +68,7 @@ export function LocadorReportProblemScreen() {
                     placeholder="Descreva o problema com o máximo de detalhes possível..."
                     value={description}
                     onChangeText={setDescription}
-                    placeholderTextColor={theme.colors.placeholder}
+                    placeholderTextColor={'#8F8F8F'} 
                     multiline
                     numberOfLines={6}
                 />

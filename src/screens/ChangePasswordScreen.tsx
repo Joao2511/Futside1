@@ -38,6 +38,7 @@ export function ChangePasswordScreen() {
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
                         placeholder="Digite sua senha atual"
+                        placeholderTextColor={'#8F8F8F'} 
                     />
                     <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeIcon}>
                         <Icon name={showCurrent ? 'eye' : 'eye-off'} size={22} color={theme.colors.placeholder} />
@@ -52,6 +53,7 @@ export function ChangePasswordScreen() {
                         value={newPassword}
                         onChangeText={setNewPassword}
                         placeholder="Digite sua nova senha"
+                        placeholderTextColor={'#8F8F8F'} 
                     />
                     <TouchableOpacity onPress={() => setShowNew(!showNew)} style={styles.eyeIcon}>
                         <Icon name={showNew ? 'eye' : 'eye-off'} size={22} color={theme.colors.placeholder} />
@@ -66,6 +68,7 @@ export function ChangePasswordScreen() {
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         placeholder="Confirme sua nova senha"
+                        placeholderTextColor={'#8F8F8F'} 
                     />
                     <TouchableOpacity onPress={() => setShowNew(!showNew)} style={styles.eyeIcon}>
                         <Icon name={showNew ? 'eye' : 'eye-off'} size={22} color={theme.colors.placeholder} />

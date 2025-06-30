@@ -51,7 +51,7 @@ export function SignInScreen({ navigation }: { navigation: any }) {
         <TextInput
           style={styles.input}
           placeholder="exemplo@email.com"
-          placeholderTextColor={theme.colors.placeholder}
+          placeholderTextColor={'#8F8F8F'} 
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -60,7 +60,7 @@ export function SignInScreen({ navigation }: { navigation: any }) {
         <TextInput
           style={styles.input}
           placeholder="Senha"
-          placeholderTextColor={theme.colors.placeholder}
+          placeholderTextColor={'#8F8F8F'} 
           secureTextEntry
           value={password}
           onChangeText={setPassword}

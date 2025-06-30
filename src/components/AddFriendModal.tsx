@@ -80,7 +80,7 @@ export function AddFriendModal({ visible, onClose }: AddFriendModalProps) {
             <TextInput
               style={styles.input}
               placeholder="Nome de utilizador ou ID"
-              placeholderTextColor={theme.colors.placeholder}
+              placeholderTextColor={'#8F8F8F'} 
               value={friendId}
               onChangeText={setFriendId}
             />

@@ -10,6 +10,7 @@ import { MapaScreen } from '../screens/MapaScreen';
 import { LocacaoStackRoutes } from './locacao.stack.routes';
 import { ProfileStackRoutes } from './profile.stack.routes';
 import { PartidasStackRoutes } from './partidas.stack.routes';
+import { CourtDetailScreen } from '../screens/CourtDetailScreen';
 
 const { Navigator, Screen } = createBottomTabNavigator();
 

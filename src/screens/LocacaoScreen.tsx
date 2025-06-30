@@ -1,5 +1,4 @@
-// src/screens/LocacaoScreen.tsx
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,11 +7,55 @@ import {
   TouchableOpacity,
   StatusBar,
   Image,
+  ActivityIndicator,
+  FlatList // Usar FlatList para a lista horizontal
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { getMyFields, getFieldsFeed, FieldResponse } from '../services/api';
+const MyLocationCard = ({ item, onPress }: { item: FieldResponse; onPress: () => void }) => (
+    <TouchableOpacity onPress={onPress} style={styles.myLocationCard}>
+        <Image 
+            source={{ uri: item.images && item.images[0] ? item.images[0] : 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=687&auto=format&fit=crop' }} 
+            style={styles.myLocationImage} 
+        />
+        <View style={styles.myLocationOverlay} />
+        <Text style={styles.myLocationName}>{item.name}</Text>
+    </TouchableOpacity>
+);
+
+const LocationCard = ({ item, onPress }: { item: any; onPress: () => void }) => (
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.cardContainer}>
+        <Image
+          source={{ uri: item.image }} // Usando 'image' do mock
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <View style={styles.darkOverlay} />
+        <Image
+          source={require('../assets/card.png')}
+          style={styles.cardWatermark}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <View style={styles.tag}>
+            <Icon name="dribbble" size={14} color={theme.colors.text} />
+            <Text style={styles.tagText}>{item.title || 'Campo Society'}</Text>
+          </View>
+          <View>
+            <Text style={styles.courtName}>{item.name}</Text>
+            <Text style={styles.courtAddress}>{item.address}</Text>
+          </View>
+          <View style={styles.cardButton}>
+            <Text style={styles.cardButtonText}>VER MAIS</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+);
 
 const mockCourts = [
   {
@@ -37,66 +80,102 @@ const mockCourts = [
       'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=749&auto=format&fit=crop',
   },
 ];
-
 export function LocacaoScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation(); // sem tipagem extra
+  const navigation = useNavigation();
 
+  const [myLocations, setMyLocations] = useState<FieldResponse[]>([]);
+  const [allLocations, setAllLocations] = useState<FieldResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMyLocations, setLoadingMyLocations] = useState(true);
+  // useFocusEffect é chamado toda vez que a tela entra em foco
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMyData = async () => {
+        setLoadingMyLocations(true);
+        try {
+          // --- MUDANÇA PRINCIPAL AQUI ---
+          // 1. Buscamos APENAS as locações do usuário.
+          const myFieldsData = await getMyFields();
+          setMyLocations(myFieldsData);
+        } catch (error) {
+          // Se a chamada falhar (com o erro 422, por exemplo),
+          // nós apenas registramos o erro e deixamos a lista vazia.
+          // Isso impede que a tela quebre.
+          console.error('Falha ao buscar "Minhas Locações":', error);
+          setMyLocations([]); // Garante que a lista fique vazia em caso de erro
+        } finally {
+          setLoadingMyLocations(false);
+        }
+      };
+
+      // 2. Preenchemos a lista principal com os dados mockados.
+      setAllLocations(mockCourts);
+      
+      // 3. Chamamos a função para buscar os dados do usuário.
+      fetchMyData();
+    }, [])
+  );
   return (
     <View style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="dark-content"
-      />
-      <View
-        style={{
-          height: insets.top,
-          backgroundColor: theme.colors.yellow || '#FDB813',
-        }}
-      />
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <View style={{ height: insets.top, backgroundColor: theme.colors.yellow || '#FDB813' }} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>LOCAÇÃO</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {mockCourts.map((court) => (
-          <TouchableOpacity
-            key={court.id}
-            onPress={() => navigation.navigate('LocationDetail', { courtId: court.id })}
-          >
 
-            <View style={styles.cardContainer}>
-              <Image
-                source={{ uri: court.image }}
-                style={styles.backgroundImage}
-                resizeMode="cover"
-              />
-              <View style={styles.darkOverlay} />
-              <Image
-                source={require('../assets/card.png')}
-                style={styles.cardWatermark}
-                resizeMode="cover"
-              />
-              <View style={styles.cardContent}>
-                <View style={styles.tag}>
-                  <Icon name="dribbble" size={14} color={theme.colors.text} />
-                  <Text style={styles.tagText}>Campo Society</Text>
-                </View>
-                <View>
-                  <Text style={styles.courtName}>{court.name}</Text>
-                  <Text style={styles.courtAddress}>{court.address}</Text>
-                </View>
-                <View style={styles.cardButton}>
-                  <Text style={styles.cardButtonText}>VER MAIS</Text>
-                </View>
-              </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* --- SESSÃO: MINHAS LOCAÇÕES (Continua funcionando com a API) --- */}
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Minhas Locações</Text>
+            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddLocation')}>
+                <Icon name="plus" size={16} color={theme.colors.white} />
+                <Text style={styles.addButtonText}>Adicionar</Text>
+            </TouchableOpacity>
+        </View>
+
+        {loadingMyLocations ? (
+            <ActivityIndicator style={{ height: 120 }} size="large" color={theme.colors.primary} />
+        ) : myLocations.length > 0 ? (
+            <FlatList
+                data={myLocations}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <MyLocationCard 
+                        item={item} 
+                        onPress={() => navigation.navigate('LocationDetail', { courtId: item.id })}
+                    />
+                )}
+                contentContainerStyle={{ paddingVertical: theme.spacing.medium }}
+            />
+        ) : (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Você ainda não cadastrou nenhuma locação.</Text>
             </View>
-          </TouchableOpacity>
+        )}
+        
+        {/* --- SESSÃO: LOCAÇÕES DISPONÍVEIS (Agora usa o mock) --- */}
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Locações Disponíveis</Text>
+        </View>
+        
+        {/* Renderiza a lista a partir do estado allLocations, que contém o mock */}
+        {allLocations.map((court) => (
+            <LocationCard
+                key={court.id}
+                item={court}
+                // O mock não tem todos os dados para a tela de detalhe,
+                // então o clique pode não funcionar como esperado para estes itens.
+                onPress={() => navigation.navigate('LocationDetail', { courtId: court.id })}
+            />
         ))}
       </ScrollView>
     </View>
   );
 }
+
 
 // (mesmos estilos de antes)
 const styles = StyleSheet.create({
@@ -112,8 +191,71 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   scrollContainer: {
-    padding: theme.spacing.large,
+    paddingHorizontal: theme.spacing.large,
     paddingBottom: 80,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: theme.spacing.large,
+    marginBottom: theme.spacing.small,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+  addButton: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.large,
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: theme.colors.white,
+    fontWeight: 'bold',
+    marginLeft: 6,
+    fontSize: 14,
+  },
+  emptyContainer: {
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.medium,
+  },
+  emptyText: {
+    color: theme.colors.placeholder,
+    fontSize: 14,
+  },
+  myLocationCard: {
+    width: 200,
+    height: 120,
+    borderRadius: theme.radius.medium,
+    marginRight: theme.spacing.medium,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  myLocationImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  myLocationOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  myLocationName: {
+    color: theme.colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+    padding: theme.spacing.medium,
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
   },
   cardContainer: {
     height: 180,
